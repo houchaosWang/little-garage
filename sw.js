@@ -1,0 +1,30 @@
+const VERSION = 'garage-v1';
+const ASSETS = [
+  '.', 'index.html', 'styles.css', 'manifest.webmanifest',
+  'icons/icon-180.png', 'icons/icon-512.png',
+  'js/main.js', 'js/garage.js', 'js/game-tires.js', 'js/vehicles.js', 'js/guide.js',
+  'js/audio.js', 'js/store.js', 'js/difficulty.js', 'js/taskgen.js', 'js/rng.js',
+].concat([
+  'welcome', 'intro-race', 'intro-dump', 'task-tires-prefix', 'task-tires-suffix',
+  'praise-1', 'praise-2', 'goodbye-1', 'closing-1', 'closing-2', 'sleeping-1',
+  'demo-hint', 'idle-tires',
+  ...Array.from({ length: 10 }, (_, i) => `num-${i + 1}`),
+].map(n => `audio/${n}.mp3`));
+
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(VERSION).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
+});
+
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys()
+      .then(keys => Promise.all(keys.filter(k => k !== VERSION).map(k => caches.delete(k))))
+      .then(() => self.clients.claim()),
+  );
+});
+
+self.addEventListener('fetch', e => {
+  e.respondWith(
+    caches.match(e.request, { ignoreSearch: true }).then(hit => hit || fetch(e.request)),
+  );
+});
