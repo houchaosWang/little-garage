@@ -1,31 +1,52 @@
 let ctx = null;
 let unlocked = false;
-const cache = new Map();
+const buffers = new Map();
+
+function ensureCtx() {
+  if (!ctx) {
+    try { ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch { ctx = null; }
+  }
+  return ctx;
+}
 
 export function unlock() {
   if (unlocked) return;
   unlocked = true;
-  try {
-    ctx = new (window.AudioContext || window.webkitAudioContext)();
-    if (ctx.state === 'suspended') ctx.resume();
-  } catch { ctx = null; }
+  const c = ensureCtx();
+  if (c && c.state === 'suspended') c.resume();
 }
 
-function loadClip(name) {
-  if (!cache.has(name)) {
-    cache.set(name, new Promise((resolve, reject) => {
-      const a = new Audio(`audio/${name}.mp3`);
-      a.preload = 'auto';
-      a.addEventListener('canplaythrough', () => resolve(a), { once: true });
-      a.addEventListener('error', () => reject(new Error(name)), { once: true });
-      a.load();
-    }));
+function loadBuffer(name) {
+  if (!buffers.has(name)) {
+    const p = (async () => {
+      const c = ensureCtx();
+      if (!c) throw new Error('no-ctx');
+      const res = await fetch(`audio/${name}.mp3`);
+      if (!res.ok) throw new Error(name);
+      const raw = await res.arrayBuffer();
+      return await c.decodeAudioData(raw);
+    })();
+    buffers.set(name, p);
+    p.catch(() => { buffers.delete(name); });
   }
-  return cache.get(name);
+  return buffers.get(name);
 }
 
 export function preload(names) {
-  for (const n of names) loadClip(n).catch(() => {});
+  for (const n of names) loadBuffer(n).catch(() => {});
+}
+
+function playBuffer(buf) {
+  return new Promise(res => {
+    try {
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+      src.connect(ctx.destination);
+      src.onended = res;
+      src.start();
+      setTimeout(res, buf.duration * 1000 + 500);
+    } catch { res(); }
+  });
 }
 
 let queue = Promise.resolve();
@@ -33,16 +54,12 @@ export function say(...names) {
   queue = queue.then(async () => {
     for (const n of names) {
       try {
-        const a = await Promise.race([
-          loadClip(n),
+        const buf = await Promise.race([
+          loadBuffer(n),
           new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 3000)),
         ]);
-        await new Promise(res => {
-          const c = a.cloneNode();
-          c.addEventListener('ended', res, { once: true });
-          c.addEventListener('error', res, { once: true });
-          c.play().catch(res);
-        });
+        if (ctx && ctx.state === 'suspended') await ctx.resume();
+        await playBuffer(buf);
       } catch { /* 缺音频不阻塞游戏 */ }
     }
   });
