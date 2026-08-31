@@ -83,11 +83,16 @@ test('genMathTask 各级别运算与选项合法', () => {
       assert.equal(t.answer, expect);
       assert.ok(t.a >= 1 && t.b >= 1 && t.answer >= 1);
       if (level === 1) assert.ok(t.answer <= 5);
-      else assert.ok(t.answer <= 10 && t.a <= 10);
+      else if (level >= 2 && level <= 4) assert.ok(t.answer <= 10 && t.a <= 10);
+      else if (level === 5) {
+        assert.equal(t.op, '+');
+        assert.ok(t.a >= 6 && t.a <= 9 && t.b >= 2 && t.b <= 9);
+        assert.ok(t.answer >= 11 && t.answer <= 18);
+      }
       assert.equal(t.options.length, 3);
       assert.equal(t.options.filter(o => o === t.answer).length, 1);
       assert.equal(new Set(t.options).size, 3);
-      assert.ok(t.options.every(o => o >= 1 && o <= 15));
+      assert.ok(t.options.every(o => o >= 1 && o <= 20));
     }
   }
 });
@@ -102,8 +107,8 @@ test('genHanziTask 选项数、池范围、答案唯一', () => {
       assert.ok(t.optionIndexes.every(i => i >= 0 && i < HANZI_POOLS[level]));
     }
   }
-  assert.equal(CHARSET.length, 20);
-  assert.equal(new Set(CHARSET).size, 20);
+  assert.equal(CHARSET.length, 40);
+  assert.equal(new Set(CHARSET).size, 40);
 });
 
 test('genTraceTask 字索引落在对应级别池', () => {
@@ -113,6 +118,7 @@ test('genTraceTask 字索引落在对应级别池', () => {
       assert.ok(TRACE_POOLS[level].includes(t.charIndex));
     }
   }
+  assert.ok(TRACE_POOLS[4].every(i => i >= 20 && i < 40));
 });
 
 test('taskSignature 各游戏指纹', () => {

@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const CHARS = [...'一二三人大小上下口中山水火土木日月手车门'];
+const CHARS = [...'一二三人大小上下口中山水火土木日月手车门天地你我他白云雨风花草虫鸟牛羊马鱼米田电'];
 const LIB_URLS = [
   'https://cdn.jsdelivr.net/npm/hanzi-writer@3/dist/hanzi-writer.min.js',
   'https://unpkg.com/hanzi-writer@3/dist/hanzi-writer.min.js',

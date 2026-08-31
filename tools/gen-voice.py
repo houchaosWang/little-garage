@@ -51,11 +51,12 @@ LINES = {
     "idle-trace": "用手指沿着字描一描！",
 }
 NUM_WORDS = ["一", "二", "三", "四", "五", "六", "七", "八", "九", "十",
-             "十一", "十二", "十三", "十四", "十五"]
+             "十一", "十二", "十三", "十四", "十五",
+             "十六", "十七", "十八", "十九", "二十"]
 for i, zh in enumerate(NUM_WORDS, start=1):
     LINES[f"num-{i}"] = zh
 
-CHAR_WORDS = "一二三人大小上下口中山水火土木日月手车门"
+CHAR_WORDS = "一二三人大小上下口中山水火土木日月手车门天地你我他白云雨风花草虫鸟牛羊马鱼米田电"
 for i, ch in enumerate(CHAR_WORDS, start=1):
     LINES[f"char-{i}"] = ch
 

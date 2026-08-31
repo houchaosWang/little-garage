@@ -136,8 +136,8 @@ const CORE_CLIPS = ['welcome', 'intro-race', 'intro-dump',
   'task-hanzi-prefix', 'task-hanzi-suffix', 'task-trace-prefix', 'task-trace-suffix',
   'num-1', 'num-2', 'num-3', 'num-4', 'num-5'];
 const REST_CLIPS = [
-  ...Array.from({ length: 10 }, (_, i) => `num-${i + 6}`),
-  ...Array.from({ length: 20 }, (_, i) => `char-${i + 1}`),
+  ...Array.from({ length: 15 }, (_, i) => `num-${i + 6}`),
+  ...Array.from({ length: 40 }, (_, i) => `char-${i + 1}`),
   'praise-1', 'praise-2', 'goodbye-1', 'closing-1', 'closing-2', 'sleeping-1',
   'idle-tires', 'demo-hint', 'fuel-over', 'fuel-more', 'idle-fuel',
   'lights-wrong', 'idle-lights', 'idle-wash',

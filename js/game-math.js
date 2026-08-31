@@ -9,7 +9,7 @@ const el = (tag, attrs = {}, html = '') => {
   return n;
 };
 
-const ROCK = '<circle cx="0" cy="0" r="22" fill="#8F8C84"/><circle cx="-7" cy="-7" r="7" fill="#B9B6AD" opacity="0.8"/>';
+const rock = r => `<circle cx="0" cy="0" r="${r}" fill="#8F8C84"/><circle cx="${-r * 0.32}" cy="${-r * 0.32}" r="${r * 0.32}" fill="#B9B6AD" opacity="0.8"/>`;
 
 export function runMathGame(garage, customer, task, attachIdleHelp) {
   return new Promise(resolve => {
@@ -27,10 +27,15 @@ export function runMathGame(garage, customer, task, attachIdleHelp) {
       <rect x="572" y="300" width="18" height="150" rx="6" fill="#A97B4F"/>`));
 
     const rocks = [];
-    const rockPos = i => ({ x: 175 + (i % 5) * 92, y: i < 5 ? 402 : 340 });
+    const total = task.op === '+' ? task.a + task.b : task.a;
+    const small = total > 10;
+    const rockR = small ? 15 : 22;
+    const rockPos = i => small
+      ? { x: 158 + (i % 7) * 68, y: [404, 356, 308][Math.floor(i / 7)] }
+      : { x: 175 + (i % 5) * 92, y: i < 5 ? 402 : 340 };
     function addRock(i, fromRight) {
       const p = rockPos(i);
-      const r = el('g', { class: 'rock' }, ROCK);
+      const r = el('g', { class: 'rock' }, rock(rockR));
       r.setAttribute('transform', fromRight ? 'translate(1300 250)' : `translate(${p.x} ${p.y})`);
       layer.appendChild(r);
       rocks.push(r);

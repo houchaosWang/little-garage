@@ -39,9 +39,11 @@ export function genLightsTask(rng, level, bodyColor, palette) {
 }
 
 export const CHARSET = ['一', '二', '三', '人', '大', '小', '上', '下', '口', '中',
-  '山', '水', '火', '土', '木', '日', '月', '手', '车', '门'];
-export const HANZI_POOLS = { 1: 6, 2: 12, 3: 20 };
-export const MAX_HANZI_LEVEL = 3;
+  '山', '水', '火', '土', '木', '日', '月', '手', '车', '门',
+  '天', '地', '你', '我', '他', '白', '云', '雨', '风', '花',
+  '草', '虫', '鸟', '牛', '羊', '马', '鱼', '米', '田', '电'];
+export const HANZI_POOLS = { 1: 6, 2: 12, 3: 20, 4: 40 };
+export const MAX_HANZI_LEVEL = 4;
 
 export function genHanziTask(rng, level) {
   const l = Math.max(1, Math.min(Math.floor(level), MAX_HANZI_LEVEL));
@@ -57,15 +59,16 @@ export const TRACE_POOLS = {
   1: [0, 1, 2, 3, 4],
   2: [6, 7, 8, 9, 10],
   3: [11, 12, 13, 14, 15, 16, 17, 18, 19],
+  4: [20, 25, 38, 39, 26, 28, 33, 34, 35, 37],
 };
-export const MAX_TRACE_LEVEL = 3;
+export const MAX_TRACE_LEVEL = 4;
 
 export function genTraceTask(rng, level) {
   const l = Math.max(1, Math.min(Math.floor(level), MAX_TRACE_LEVEL));
   return { type: 'trace', charIndex: rng.pick(TRACE_POOLS[l]) };
 }
 
-export const MAX_MATH_LEVEL = 4;
+export const MAX_MATH_LEVEL = 5;
 
 export function genMathTask(rng, level) {
   const l = Math.max(1, Math.min(Math.floor(level), MAX_MATH_LEVEL));
@@ -80,16 +83,22 @@ export function genMathTask(rng, level) {
     b = rng.int(1, a - 1);
     op = '-';
   };
+  const plusCarry = () => {
+    a = rng.int(6, 9);
+    b = rng.int(11 - a, 9);
+    op = '+';
+  };
   if (l === 1) plusWithin(5);
   else if (l === 2) plusWithin(10);
   else if (l === 3) minusWithin(10);
-  else (rng.next() < 0.5 ? plusWithin(10) : minusWithin(10));
+  else if (l === 4) (rng.next() < 0.5 ? plusWithin(10) : minusWithin(10));
+  else plusCarry();
   const answer = op === '+' ? a + b : a - b;
   const options = [answer];
   while (options.length < 3) {
     const delta = rng.int(1, 3) * (rng.next() < 0.5 ? -1 : 1);
     const d = answer + delta;
-    if (d >= 1 && d <= 15 && !options.includes(d)) options.push(d);
+    if (d >= 1 && d <= 20 && !options.includes(d)) options.push(d);
   }
   return { type: 'math', op, a, b, answer, options: rng.shuffle(options) };
 }
