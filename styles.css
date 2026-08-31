@@ -17,3 +17,4 @@ html, body { height: 100%; overflow: hidden; background: #FFF3DD; font-family: -
 @keyframes bounce-soft { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
 @keyframes pop { 0% { transform: scale(0.4); opacity: 0; } 70% { transform: scale(1.15); } 100% { transform: scale(1); opacity: 1; } }
 @keyframes pulse-ring { 0%,100% { opacity: 0.5; } 50% { opacity: 1; } }
+.tire-inner { transform-box: fill-box; transform-origin: center; }

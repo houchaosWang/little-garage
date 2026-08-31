@@ -15,8 +15,10 @@ function svgPoint(stage, clientX, clientY) {
 }
 
 const tireHTML = `
-  <circle cx="0" cy="0" r="34" fill="#3A3A38"/>
-  <circle cx="0" cy="0" r="14" fill="#B9B6AD"/>`;
+  <g class="tire-inner">
+    <circle cx="0" cy="0" r="34" fill="#3A3A38"/>
+    <circle cx="0" cy="0" r="14" fill="#B9B6AD"/>
+  </g>`;
 
 export function runTireGame(garage, customer, task, attachIdleHelp) {
   return new Promise(resolve => {
@@ -65,29 +67,33 @@ export function runTireGame(garage, customer, task, attachIdleHelp) {
 
     let drag = null;
     function onDown(e) {
+      if (drag) return;
       const g = e.target.closest('.tire');
       if (!g || g.dataset.placed) return;
       const p = svgPoint(stage, e.clientX, e.clientY);
-      const [hx, hy] = g.dataset.home.split(',').map(Number);
-      drag = { g, dx: p.x - hx, dy: p.y - hy };
+      const m = /translate\(([-\d.]+)[ ,]([-\d.]+)\)/.exec(g.getAttribute('transform'));
+      const cur = m ? [Number(m[1]), Number(m[2])] : g.dataset.home.split(',').map(Number);
+      g.style.transition = '';
+      drag = { g, dx: p.x - cur[0], dy: p.y - cur[1], id: e.pointerId };
       g.parentNode.appendChild(g);
       sfx.pop();
       idle.reset();
     }
     function onMove(e) {
-      if (!drag) return;
+      if (!drag || e.pointerId !== drag.id) return;
       const p = svgPoint(stage, e.clientX, e.clientY);
       drag.g.setAttribute('transform', `translate(${p.x - drag.dx} ${p.y - drag.dy})`);
+      idle.reset();
     }
     function onUp(e) {
-      if (!drag) return;
+      if (!drag || e.pointerId !== drag.id) return;
       const p = svgPoint(stage, e.clientX, e.clientY);
       const near = slots.find(s => !s.dataset.filled && Math.hypot(p.x - s.dataset.cx, p.y - slotY) < 70);
       if (near) {
         near.dataset.filled = '1';
         drag.g.dataset.placed = '1';
         drag.g.setAttribute('transform', `translate(${near.dataset.cx} ${slotY})`);
-        drag.g.style.animation = 'pop 0.35s ease-out';
+        drag.g.querySelector('.tire-inner').style.animation = 'pop 0.35s ease-out';
         placed += 1;
         sfx.snap();
         say(`num-${placed}`);
@@ -96,9 +102,10 @@ export function runTireGame(garage, customer, task, attachIdleHelp) {
         if (placed === task.count) finish();
       } else {
         const [hx, hy] = drag.g.dataset.home.split(',').map(Number);
-        drag.g.style.transition = 'transform 0.3s';
-        drag.g.setAttribute('transform', `translate(${hx} ${hy})`);
-        setTimeout(() => { drag && (drag.g.style.transition = ''); }, 320);
+        const g = drag.g;
+        g.style.transition = 'transform 0.3s';
+        g.setAttribute('transform', `translate(${hx} ${hy})`);
+        setTimeout(() => { g.style.transition = ''; }, 320);
       }
       drag = null;
       idle.reset();
