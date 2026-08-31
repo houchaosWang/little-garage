@@ -8,12 +8,17 @@ import {
   genFuelTask, MAX_FUEL_LEVEL,
   genLightsTask, MAX_LIGHTS_LEVEL,
   genMathTask, MAX_MATH_LEVEL,
+  genHanziTask, MAX_HANZI_LEVEL,
+  genTraceTask, MAX_TRACE_LEVEL,
+  CHARSET,
 } from './taskgen.js';
 import { runTireGame } from './game-tires.js';
 import { runFuelGame } from './game-fuel.js';
 import { runLightsGame } from './game-lights.js';
 import { runMathGame } from './game-math.js';
 import { runWashGame } from './game-wash.js';
+import { runHanziGame } from './game-hanzi.js';
+import { runTraceGame } from './game-trace.js';
 import { attachIdleHelp, guideHand } from './guide.js';
 import { initParentPanel } from './parent.js';
 import { PALETTE } from './vehicles.js';
@@ -54,10 +59,24 @@ const GAME_DEFS = {
     bubble: () => '帮我洗个澡，擦得亮晶晶！',
     voice: () => ['task-wash'],
   },
+  hanzi: {
+    skill: 'literacy', max: MAX_HANZI_LEVEL,
+    gen: (rng, lvl) => genHanziTask(rng, lvl),
+    run: runHanziGame,
+    bubble: t => `找到「${CHARSET[t.answerIndex]}」`,
+    voice: t => ['task-hanzi-prefix', `char-${t.answerIndex + 1}`, 'task-hanzi-suffix'],
+  },
+  trace: {
+    skill: 'tracing', max: MAX_TRACE_LEVEL,
+    gen: (rng, lvl) => genTraceTask(rng, lvl),
+    run: runTraceGame,
+    bubble: t => `写一写「${CHARSET[t.charIndex]}」`,
+    voice: t => ['task-trace-prefix', `char-${t.charIndex + 1}`, 'task-trace-suffix'],
+  },
 };
 
 function pickGames(rng) {
-  const pool = ['tires', 'fuel', 'lights', 'math'];
+  const pool = ['tires', 'fuel', 'lights', 'math', 'hanzi', 'trace'];
   const first = rng.pick(pool);
   const second = rng.pick(pool.filter(g => g !== first));
   const list = [first, second];
