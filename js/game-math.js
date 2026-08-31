@@ -44,6 +44,7 @@ export function runMathGame(garage, customer, task, attachIdleHelp) {
           r.style.transition = 'transform 0.7s cubic-bezier(.3,.8,.4,1)';
           r.setAttribute('transform', `translate(${p.x} ${p.y})`);
         }));
+        setTimeout(() => { r.style.transition = ''; }, 750);
       }
     }
     function removeRock(r) {

@@ -127,6 +127,6 @@ test('taskSignature 各游戏指纹', () => {
   assert.equal(taskSignature('tires', { count: 7 }), 'c7');
   assert.equal(taskSignature('trace', { charIndex: 2 }), 'w2');
   assert.equal(taskSignature('fuel', { target: 9 }), 'f9');
-  assert.equal(taskSignature('lights', { answer: 'red' }), 'lred');
+  assert.equal(taskSignature('lights', { answer: 'red' }), '');
   assert.equal(taskSignature('wash', {}), '');
 });

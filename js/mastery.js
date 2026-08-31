@@ -32,15 +32,19 @@ export function dueReviews(skills, today) {
   return out.sort((a, b) => (a.due < b.due ? -1 : a.due > b.due ? 1 : 0));
 }
 
-export function onReviewResult(skill, level, clean, today) {
+export function onReviewResult(skill, level, result, today) {
   const m = skill.mastery[String(level)];
   if (!m) return { lapsed: false, solid: false };
-  if (clean) {
+  if (result === 'pass') {
     const interval = BOX_DAYS[Math.min(m.box, BOX_DAYS.length - 1)];
     if (interval >= 7) m.passes7 = (m.passes7 || 0) + 1;
     if (m.passes7 >= 2) m.state = 'solid';
     m.box = Math.min(m.box + 1, BOX_DAYS.length - 1);
     m.due = addDays(today, BOX_DAYS[m.box]);
+    return { lapsed: false, solid: m.state === 'solid' };
+  }
+  if (result === 'soft') {
+    m.due = addDays(today, 1);
     return { lapsed: false, solid: m.state === 'solid' };
   }
   m.lapses = (m.lapses || 0) + 1;
@@ -51,4 +55,14 @@ export function onReviewResult(skill, level, clean, today) {
   skill.level = Math.min(skill.level, level);
   skill.streak = 0;
   return { lapsed: true, solid: false };
+}
+
+export function seedMissingMastery(skills, today) {
+  for (const s of Object.values(skills)) {
+    for (let n = 1; n < Math.floor(s.level); n++) {
+      if (!s.mastery[String(n)]) {
+        s.mastery[String(n)] = { state: 'provisional', box: 0, due: addDays(today, 1), passes7: 0, lapses: 0 };
+      }
+    }
+  }
 }

@@ -3,7 +3,7 @@ import { makeRng } from './rng.js';
 import { createStore, localDate } from './store.js';
 import { createGarage } from './garage.js';
 import { effectiveLevel, recordOutcome } from './difficulty.js';
-import { onPromoted, dueReviews, onReviewResult } from './mastery.js';
+import { onPromoted, dueReviews, onReviewResult, seedMissingMastery } from './mastery.js';
 import {
   genTireTask, MAX_TIRE_LEVEL,
   genFuelTask, MAX_FUEL_LEVEL,
@@ -100,6 +100,8 @@ window.__guideHand = (a, b) => guideHand(stage, a, b);
 const rng = makeRng();
 const store = createStore(window.localStorage);
 let data = store.load();
+seedMissingMastery(data.skills, localDate());
+store.save(data);
 initParentPanel(store, () => data, {
   counting: { name: '数数·装轮胎', max: MAX_TIRE_LEVEL },
   numerals: { name: '认数字·加油', max: MAX_FUEL_LEVEL },
@@ -202,19 +204,22 @@ async function nextJob() {
     garage.showBubble(def.bubble(task), voices);
     window.__firstTirePlay = key === 'tires' && !data.stats.byGame.tires;
     const outcome = await def.run(garage, customer, task, attachIdleHelp);
-    if (skill) {
-      if (isReview) {
-        onReviewResult(skill, review.level, outcome.errors === 0 && outcome.helps === 0, today);
-        data.reviewsToday.count += 1;
-      } else {
-        const before = effectiveLevel(skill, def.max);
-        const after = recordOutcome(skill, outcome, def.max);
-        skill.level = after.level;
-        skill.streak = after.streak;
-        if (Math.floor(after.level) > before) onPromoted(skill, before, today);
+    if (!outcome.aborted) {
+      if (skill) {
+        if (isReview) {
+          const result = outcome.errors > 0 ? 'fail' : (outcome.helps > 0 ? 'soft' : 'pass');
+          onReviewResult(skill, review.level, result, today);
+          data.reviewsToday.count += 1;
+        } else {
+          const before = effectiveLevel(skill, def.max);
+          const after = recordOutcome(skill, outcome, def.max);
+          skill.level = after.level;
+          skill.streak = after.streak;
+          if (Math.floor(after.level) > before) onPromoted(skill, before, today);
+        }
       }
+      store.recordGame(data, key, outcome);
     }
-    store.recordGame(data, key, outcome);
   }
   addWheels(customer.vehicle);
   sfx.snap();

@@ -27,7 +27,7 @@ export function runTraceGame(garage, customer, task, attachIdleHelp) {
       done = true;
       idle.dispose();
       box.remove();
-      resolve({ errors: aborted ? 0 : errors, helps });
+      resolve(aborted ? { errors: 0, helps, aborted: true } : { errors, helps });
     }
 
     try {

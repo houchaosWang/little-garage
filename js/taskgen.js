@@ -107,7 +107,7 @@ export function taskSignature(key, task) {
   switch (key) {
     case 'tires': return `c${task.count}`;
     case 'fuel': return `f${task.target}`;
-    case 'lights': return `l${task.answer}`;
+    case 'lights': return '';
     case 'math': return `${task.a}${task.op}${task.b}`;
     case 'hanzi': return `h${task.answerIndex}`;
     case 'trace': return `w${task.charIndex}`;

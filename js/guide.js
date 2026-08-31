@@ -25,10 +25,12 @@ export function attachIdleHelp(stage, onIdle, ms = 12000) {
 
 export function pulse(el) {
   if (!el) return;
+  const m = /translate\(\s*([-\d.]+)[ ,]\s*([-\d.]+)\s*\)/.exec((el.getAttribute && el.getAttribute('transform')) || '');
+  const pre = m ? `translate(${m[1]}px, ${m[2]}px) ` : '';
   el.style.transformBox = 'fill-box';
   el.style.transformOrigin = 'center';
   el.animate(
-    [{ transform: 'scale(1)' }, { transform: 'scale(1.18)' }, { transform: 'scale(1)' }],
+    [{ transform: pre + 'scale(1)' }, { transform: pre + 'scale(1.18)' }, { transform: pre + 'scale(1)' }],
     { duration: 450, iterations: 3, easing: 'ease-in-out' },
   );
 }
