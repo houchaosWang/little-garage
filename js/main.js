@@ -24,6 +24,7 @@ import { runTraceGame } from './game-trace.js';
 import { attachIdleHelp, guideHand } from './guide.js';
 import { initParentPanel } from './parent.js';
 import { PALETTE, addWheels } from './vehicles.js';
+import { showHub } from './hub.js';
 
 const GAME_DEFS = {
   tires: {
@@ -165,9 +166,29 @@ bell.addEventListener('pointerdown', async () => {
     showSleeping();
   } else {
     await say('welcome');
-    nextJob().catch(handleLoopError);
+    goHub();
   }
 }, { once: true });
+
+function goHub() {
+  if (store.jobsToday(data) >= data.settings.dailyJobs) {
+    showSleeping();
+    return;
+  }
+  showHub(stage, data, {
+    onNext: () => { nextJob().catch(handleLoopError); },
+    onGarage: () => openStubPage('我的车库装修中……'),
+    onAlbum: () => openStubPage('相册整理中……'),
+  });
+}
+
+function openStubPage(text) {
+  const wrap = document.createElement('div');
+  wrap.className = 'page-overlay';
+  wrap.innerHTML = `<div class="page-card"><p class="page-title">${text}</p><button type="button" class="pp-wide" id="page-back">返回</button></div>`;
+  document.body.appendChild(wrap);
+  wrap.querySelector('#page-back').addEventListener('pointerdown', () => wrap.remove());
+}
 
 async function nextJob() {
   const garage = createGarage(stage, rng);
@@ -234,7 +255,7 @@ async function nextJob() {
   if (store.jobsToday(data) >= data.settings.dailyJobs) {
     await showClosing();
   } else {
-    nextJob().catch(handleLoopError);
+    goHub();
   }
 }
 
