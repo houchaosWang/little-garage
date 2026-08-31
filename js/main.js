@@ -1,8 +1,9 @@
 import { unlock, sfx, say, sayNow, preload } from './audio.js';
 import { makeRng } from './rng.js';
-import { createStore } from './store.js';
+import { createStore, localDate } from './store.js';
 import { createGarage } from './garage.js';
 import { effectiveLevel, recordOutcome } from './difficulty.js';
+import { onPromoted, dueReviews, onReviewResult } from './mastery.js';
 import {
   genTireTask, MAX_TIRE_LEVEL,
   genFuelTask, MAX_FUEL_LEVEL,
@@ -11,6 +12,7 @@ import {
   genHanziTask, MAX_HANZI_LEVEL,
   genTraceTask, MAX_TRACE_LEVEL,
   CHARSET,
+  taskSignature,
 } from './taskgen.js';
 import { runTireGame } from './game-tires.js';
 import { runFuelGame } from './game-fuel.js';
@@ -75,13 +77,17 @@ const GAME_DEFS = {
   },
 };
 
-function pickGames(rng) {
-  const pool = ['tires', 'fuel', 'lights', 'math', 'hanzi', 'trace'];
-  const first = rng.pick(pool);
-  const second = rng.pick(pool.filter(g => g !== first));
-  const list = [first, second];
-  if (rng.next() < 0.25) list.push('wash');
-  return list;
+const SKILL_GAME = { counting: 'tires', numerals: 'fuel', colors: 'lights', math: 'math', literacy: 'hanzi', tracing: 'trace' };
+
+function genUnique(def, key, lvl, customer, skill) {
+  let task = def.gen(rng, lvl, customer);
+  if (!skill || !taskSignature(key, task)) return task;
+  for (let i = 0; i < 5 && skill.recent.includes(taskSignature(key, task)); i++) {
+    task = def.gen(rng, lvl, customer);
+  }
+  skill.recent.push(taskSignature(key, task));
+  if (skill.recent.length > 6) skill.recent.shift();
+  return task;
 }
 
 const boot = document.getElementById('boot');
@@ -157,19 +163,48 @@ async function nextJob() {
   const customer = garage.newCustomer();
   await garage.driveIn(customer.vehicle);
 
-  const games = pickGames(rng);
+  const today = localDate();
+  if (data.reviewsToday.date !== today) data.reviewsToday = { date: today, count: 0 };
+  let review = null;
+  if (data.reviewsToday.count < 2) {
+    review = dueReviews(data.skills, today)[0] || null;
+  }
+
+  const pool = ['tires', 'fuel', 'lights', 'math', 'hanzi', 'trace'];
+  let games;
+  if (review) {
+    const rGame = SKILL_GAME[review.skill];
+    games = [rng.pick(pool.filter(g => g !== rGame)), rGame];
+  } else {
+    const first = rng.pick(pool);
+    games = [first, rng.pick(pool.filter(g => g !== first))];
+  }
+  if (rng.next() < 0.25) games.push('wash');
+
   for (let i = 0; i < games.length; i++) {
     const key = games[i];
     const def = GAME_DEFS[key];
+    const isReview = !!review && i === 1;
     const skill = def.skill ? data.skills[def.skill] : null;
-    const lvl = skill ? effectiveLevel(skill, def.max) : 1;
-    const task = def.gen(rng, lvl, customer);
+    const lvl = isReview ? review.level : (skill ? effectiveLevel(skill, def.max) : 1);
+    const task = genUnique(def, key, lvl, customer, skill);
     const voices = def.voice(task).slice();
     if (i === 0) voices.unshift(customer.vehicle.meta.intro);
     garage.showBubble(def.bubble(task), voices);
     window.__firstTirePlay = key === 'tires' && !data.stats.byGame.tires;
     const outcome = await def.run(garage, customer, task, attachIdleHelp);
-    if (skill) data.skills[def.skill] = recordOutcome(skill, outcome, def.max);
+    if (skill) {
+      if (isReview) {
+        onReviewResult(skill, review.level, outcome.errors === 0 && outcome.helps === 0, today);
+        data.reviewsToday.count += 1;
+      } else {
+        const before = effectiveLevel(skill, def.max);
+        const after = recordOutcome(skill, outcome, def.max);
+        skill.level = after.level;
+        skill.streak = after.streak;
+        if (Math.floor(after.level) > before) onPromoted(skill, before, today);
+      }
+    }
     store.recordGame(data, key, outcome);
   }
   store.recordJob(data);
