@@ -5,12 +5,14 @@ import { createGarage } from './garage.js';
 import { effectiveLevel, recordOutcome } from './difficulty.js';
 import { genTireTask, MAX_TIRE_LEVEL } from './taskgen.js';
 import { runTireGame } from './game-tires.js';
-import { attachIdleHelp } from './guide.js';
+import { attachIdleHelp, guideHand } from './guide.js';
 
 const boot = document.getElementById('boot');
 const bell = document.getElementById('bell');
 const stage = document.getElementById('stage');
 const rotateTip = document.getElementById('rotate-tip');
+
+window.__guideHand = (a, b) => guideHand(stage, a, b);
 
 const rng = makeRng();
 const store = createStore(window.localStorage);
@@ -63,6 +65,7 @@ async function nextJob() {
     [customer.vehicle.meta.intro, 'task-tires-prefix', `num-${task.count}`, 'task-tires-suffix'],
   );
 
+  window.__firstTirePlay = !data.stats.byGame.tires;
   const outcome = await runTireGame(garage, customer, task, attachIdleHelp);
 
   data.skills.counting = recordOutcome(data.skills.counting, outcome, MAX_TIRE_LEVEL);

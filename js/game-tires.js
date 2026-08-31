@@ -116,6 +116,13 @@ export function runTireGame(garage, customer, task, attachIdleHelp) {
     stage.addEventListener('pointerup', onUp);
     stage.addEventListener('pointercancel', onUp);
 
+    if (window.__firstTirePlay) {
+      setTimeout(() => {
+        say('demo-hint');
+        window.__guideHand?.(tires[0], slots[0]);
+      }, 800);
+    }
+
     function finish() {
       stage.removeEventListener('pointerdown', onDown);
       stage.removeEventListener('pointermove', onMove);
