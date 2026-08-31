@@ -26,3 +26,4 @@
 - 重新生成语音：`python tools/gen-voice.py` （需先 `python -m pip install edge-tts`；本机 pip 不在 PATH 上）
 - 重新生成图标：PowerShell 运行 `tools/gen-icons.ps1` （仅Windows，System.Drawing）
 - 技术栈：纯 HTML + SVG + vanilla JS（ES Modules），零框架、零依赖、零构建。
+- 描字笔画数据与渲染：[hanzi-writer](https://github.com/chanind/hanzi-writer)（MIT License，已离线打包于 vendor/）
