@@ -21,6 +21,15 @@ test('空存储返回默认档', () => {
   assert.deepEqual(d.skills.counting.mastery, {});
   assert.deepEqual(d.skills.counting.recent, []);
   assert.deepEqual(d.reviewsToday, { date: '', count: 0 });
+  assert.deepEqual(d.collection, {
+    stickers: [],
+    paints: ['red'],
+    wheels: ['w1'],
+    friends: [],
+    badges: [],
+    carConfig: { paint: 'purple', wheel: 'w1', placed: [] },
+  });
+  assert.equal(d.vipMeter, 0);
 });
 
 test('损坏JSON回默认档不抛错', () => {
@@ -112,4 +121,6 @@ test('旧档自动补全新技能字段且不动旧进度', () => {
   assert.deepEqual(d.skills.counting.mastery, {});
   assert.deepEqual(d.skills.counting.recent, []);
   assert.deepEqual(d.reviewsToday, { date: '', count: 0 });
+  assert.equal(d.collection.carConfig.paint, 'purple');
+  assert.equal(d.vipMeter, 0);
 });

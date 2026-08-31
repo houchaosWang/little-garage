@@ -1,4 +1,4 @@
-import { buildVehicle, VEHICLE_TYPES, PALETTE, NAMES } from './vehicles.js';
+import { buildVehicle, VEHICLE_TYPES, PALETTE, NAMES, vehicleLockColor } from './vehicles.js';
 import { sayNow, sfx } from './audio.js';
 
 const SVG = 'http://www.w3.org/2000/svg';
@@ -98,7 +98,8 @@ export function createGarage(stage, rng) {
 
   function newCustomer() {
     const type = rng.pick(VEHICLE_TYPES);
-    const color = rng.pick(Object.keys(PALETTE));
+    const lock = vehicleLockColor(type);
+    const color = lock && lock !== 'skip' ? lock : rng.pick(Object.keys(PALETTE));
     const name = rng.pick(NAMES);
     const vehicle = buildVehicle(type, color, { missingWheels: true });
     return { type, color, name, vehicle };

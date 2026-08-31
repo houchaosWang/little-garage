@@ -15,6 +15,15 @@ export function defaultSave() {
     },
     stats: { daily: {}, byGame: {} },
     settings: { dailyJobs: 4 },
+    collection: {
+      stickers: [],
+      paints: ['red'],
+      wheels: ['w1'],
+      friends: [],
+      badges: [],
+      carConfig: { paint: 'purple', wheel: 'w1', placed: [] },
+    },
+    vipMeter: 0,
     reviewsToday: { date: '', count: 0 },
   };
 }
