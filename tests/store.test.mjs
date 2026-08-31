@@ -18,6 +18,9 @@ test('空存储返回默认档', () => {
   assert.equal(d.skills.counting.level, 1);
   assert.equal(d.settings.dailyJobs, 4);
   assert.equal(Object.keys(d.skills).length, 6);
+  assert.deepEqual(d.skills.counting.mastery, {});
+  assert.deepEqual(d.skills.counting.recent, []);
+  assert.deepEqual(d.reviewsToday, { date: '', count: 0 });
 });
 
 test('损坏JSON回默认档不抛错', () => {
@@ -106,4 +109,7 @@ test('旧档自动补全新技能字段且不动旧进度', () => {
   assert.equal(d.skills.math.level, 1);
   assert.equal(d.skills.literacy.level, 1);
   assert.equal(d.skills.tracing.level, 1);
+  assert.deepEqual(d.skills.counting.mastery, {});
+  assert.deepEqual(d.skills.counting.recent, []);
+  assert.deepEqual(d.reviewsToday, { date: '', count: 0 });
 });

@@ -6,18 +6,16 @@ export function localDate(now = new Date()) {
 }
 
 export function defaultSave() {
+  const skill = () => ({ level: 1, streak: 0, mastery: {}, recent: [] });
   return {
     version: 1,
     skills: {
-      counting: { level: 1, streak: 0 },
-      numerals: { level: 1, streak: 0 },
-      colors: { level: 1, streak: 0 },
-      math: { level: 1, streak: 0 },
-      literacy: { level: 1, streak: 0 },
-      tracing: { level: 1, streak: 0 },
+      counting: skill(), numerals: skill(), colors: skill(),
+      math: skill(), literacy: skill(), tracing: skill(),
     },
     stats: { daily: {}, byGame: {} },
     settings: { dailyJobs: 4 },
+    reviewsToday: { date: '', count: 0 },
   };
 }
 

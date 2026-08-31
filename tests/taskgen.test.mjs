@@ -8,6 +8,7 @@ import {
   genMathTask, MAX_MATH_LEVEL,
   genHanziTask, CHARSET, HANZI_POOLS, MAX_HANZI_LEVEL,
   genTraceTask, TRACE_POOLS, MAX_TRACE_LEVEL,
+  taskSignature,
 } from '../js/taskgen.js';
 
 test('各级别数量落在配置区间，架上轮胎多于目标且不超12', () => {
@@ -112,4 +113,14 @@ test('genTraceTask 字索引落在对应级别池', () => {
       assert.ok(TRACE_POOLS[level].includes(t.charIndex));
     }
   }
+});
+
+test('taskSignature 各游戏指纹', () => {
+  assert.equal(taskSignature('math', { a: 3, op: '+', b: 2 }), '3+2');
+  assert.equal(taskSignature('hanzi', { answerIndex: 4 }), 'h4');
+  assert.equal(taskSignature('tires', { count: 7 }), 'c7');
+  assert.equal(taskSignature('trace', { charIndex: 2 }), 'w2');
+  assert.equal(taskSignature('fuel', { target: 9 }), 'f9');
+  assert.equal(taskSignature('lights', { answer: 'red' }), 'lred');
+  assert.equal(taskSignature('wash', {}), '');
 });
