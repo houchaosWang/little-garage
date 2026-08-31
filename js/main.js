@@ -117,11 +117,18 @@ checkOrientation();
 const bootHint = document.getElementById('boot-hint');
 const CORE_CLIPS = ['welcome', 'intro-race', 'intro-dump',
   'task-tires-prefix', 'task-tires-suffix', 'task-fuel-prefix', 'task-fuel-suffix',
-  'task-lights', 'task-wash', 'num-1', 'num-2', 'num-3', 'num-4', 'num-5'];
-const REST_CLIPS = ['num-6', 'num-7', 'num-8', 'num-9', 'num-10',
+  'task-lights', 'task-wash', 'math-jia', 'math-jian', 'math-dengyu-ji',
+  'task-hanzi-prefix', 'task-hanzi-suffix', 'task-trace-prefix', 'task-trace-suffix',
+  'num-1', 'num-2', 'num-3', 'num-4', 'num-5'];
+const REST_CLIPS = [
+  ...Array.from({ length: 10 }, (_, i) => `num-${i + 6}`),
+  ...Array.from({ length: 20 }, (_, i) => `char-${i + 1}`),
   'praise-1', 'praise-2', 'goodbye-1', 'closing-1', 'closing-2', 'sleeping-1',
   'idle-tires', 'demo-hint', 'fuel-over', 'fuel-more', 'idle-fuel',
-  'lights-wrong', 'idle-lights', 'idle-wash'];
+  'lights-wrong', 'idle-lights', 'idle-wash',
+  'task-math', 'math-dengyu', 'math-yiqi', 'math-wrong', 'math-duila', 'math-zailai', 'math-nazou', 'idle-math',
+  'hanzi-wrong', 'idle-hanzi', 'trace-hint', 'trace-good', 'idle-trace',
+];
 preload(CORE_CLIPS, (done, total) => {
   bootHint.textContent = `正在准备声音 ${done}/${total}`;
 }).then(failed => {
