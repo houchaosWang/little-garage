@@ -11,7 +11,7 @@ export function runWashGame(garage, customer, task, attachIdleHelp) {
     const rng = makeRng();
     let helps = 0;
     let finished = false;
-    let pressed = false;
+    const active = new Set();
     let cleared = 0;
 
     const pt = stage.createSVGPoint();
@@ -77,16 +77,16 @@ export function runWashGame(garage, customer, task, attachIdleHelp) {
 
     function onDown(e) {
       if (finished) return;
-      pressed = true;
+      active.add(e.pointerId);
       tryWipe(e);
       idle.reset();
     }
     function onMove(e) {
-      if (!pressed || finished) return;
+      if (!active.has(e.pointerId) || finished) return;
       tryWipe(e);
       idle.reset();
     }
-    function onUp() { pressed = false; }
+    function onUp(e) { active.delete(e.pointerId); }
 
     stage.addEventListener('pointerdown', onDown);
     window.addEventListener('pointermove', onMove);

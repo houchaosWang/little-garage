@@ -90,7 +90,9 @@ const bootHint = document.getElementById('boot-hint');
 preload(['welcome', 'intro-race', 'intro-dump', 'task-tires-prefix', 'task-tires-suffix',
   'num-1', 'num-2', 'num-3', 'num-4', 'num-5', 'num-6', 'num-7', 'num-8', 'num-9', 'num-10',
   'praise-1', 'praise-2', 'goodbye-1', 'closing-1', 'closing-2', 'sleeping-1', 'idle-tires',
-  'demo-hint'],
+  'demo-hint',
+  'task-fuel-prefix', 'task-fuel-suffix', 'fuel-over', 'fuel-more', 'idle-fuel',
+  'task-lights', 'lights-wrong', 'idle-lights', 'task-wash', 'idle-wash'],
 (done, total) => {
   bootHint.textContent = `正在准备声音 ${done}/${total}`;
 }).then(failed => {

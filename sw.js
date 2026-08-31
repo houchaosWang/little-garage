@@ -1,16 +1,19 @@
 // 每次发布内容更新必须改VERSION（如garage-v3），否则iPad拿不到新资源
-const VERSION = 'garage-v4';
+const VERSION = 'garage-v5';
 const ASSETS = [
   '.', 'index.html', 'styles.css', 'manifest.webmanifest',
   'icons/icon-180.png', 'icons/icon-512.png',
   'audio/silence.wav',
   'js/main.js', 'js/parent.js', 'js/garage.js', 'js/game-tires.js', 'js/vehicles.js', 'js/guide.js',
   'js/audio.js', 'js/store.js', 'js/difficulty.js', 'js/taskgen.js', 'js/rng.js',
+  'js/game-fuel.js', 'js/game-lights.js', 'js/game-wash.js',
 ].concat([
   'welcome', 'intro-race', 'intro-dump', 'task-tires-prefix', 'task-tires-suffix',
   'praise-1', 'praise-2', 'goodbye-1', 'closing-1', 'closing-2', 'sleeping-1',
   'demo-hint', 'idle-tires',
   ...Array.from({ length: 10 }, (_, i) => `num-${i + 1}`),
+  'task-fuel-prefix', 'task-fuel-suffix', 'fuel-over', 'fuel-more', 'idle-fuel',
+  'task-lights', 'lights-wrong', 'idle-lights', 'task-wash', 'idle-wash',
 ].map(n => `audio/${n}.mp3`));
 
 self.addEventListener('install', e => {

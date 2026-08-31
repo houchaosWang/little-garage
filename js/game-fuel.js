@@ -83,6 +83,7 @@ export function runFuelGame(garage, customer, task, attachIdleHelp) {
 
     function onDown(e) {
       if (finished) return;
+      if (holding !== null) return;
       if (!e.target.closest('#fuel-btn')) return;
       holding = e.pointerId;
       last = performance.now();
