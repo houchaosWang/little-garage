@@ -1,0 +1,62 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { createStore, localDate } from '../js/store.js';
+
+function fakeStorage() {
+  const m = new Map();
+  return {
+    getItem: k => (m.has(k) ? m.get(k) : null),
+    setItem: (k, v) => m.set(k, String(v)),
+  };
+}
+
+test('空存储返回默认档', () => {
+  const s = createStore(fakeStorage(), () => '2026-08-31');
+  const d = s.load();
+  assert.equal(d.version, 1);
+  assert.equal(d.skills.counting.level, 1);
+  assert.equal(d.settings.dailyJobs, 4);
+});
+
+test('损坏JSON回默认档不抛错', () => {
+  const st = fakeStorage();
+  st.setItem('garage-save-v1', '{oops');
+  const s = createStore(st, () => '2026-08-31');
+  assert.equal(s.load().version, 1);
+});
+
+test('保存后能读回，且缺字段用默认补全', () => {
+  const st = fakeStorage();
+  const s = createStore(st, () => '2026-08-31');
+  const d = s.load();
+  d.skills.counting.level = 2.5;
+  s.save(d);
+  const d2 = s.load();
+  assert.equal(d2.skills.counting.level, 2.5);
+  assert.equal(d2.settings.dailyJobs, 4);
+});
+
+test('recordJob 累计当日，跨天从0起', () => {
+  const st = fakeStorage();
+  let today = '2026-08-31';
+  const s = createStore(st, () => today);
+  let d = s.load();
+  s.recordJob(d);
+  s.recordJob(d);
+  assert.equal(s.jobsToday(d), 2);
+  today = '2026-09-01';
+  d = s.load();
+  assert.equal(s.jobsToday(d), 0);
+});
+
+test('recordGame 累计游戏统计', () => {
+  const s = createStore(fakeStorage(), () => '2026-08-31');
+  const d = s.load();
+  s.recordGame(d, 'tires', { helps: 1, errors: 0 });
+  s.recordGame(d, 'tires', { helps: 0, errors: 2 });
+  assert.deepEqual(d.stats.byGame.tires, { plays: 2, helps: 1, errors: 2 });
+});
+
+test('localDate 格式 YYYY-MM-DD', () => {
+  assert.match(localDate(new Date(2026, 0, 5)), /^2026-01-05$/);
+});
