@@ -87,19 +87,21 @@ window.addEventListener('resize', checkOrientation);
 checkOrientation();
 
 const bootHint = document.getElementById('boot-hint');
-preload(['welcome', 'intro-race', 'intro-dump', 'task-tires-prefix', 'task-tires-suffix',
-  'num-1', 'num-2', 'num-3', 'num-4', 'num-5', 'num-6', 'num-7', 'num-8', 'num-9', 'num-10',
-  'praise-1', 'praise-2', 'goodbye-1', 'closing-1', 'closing-2', 'sleeping-1', 'idle-tires',
-  'demo-hint',
-  'task-fuel-prefix', 'task-fuel-suffix', 'fuel-over', 'fuel-more', 'idle-fuel',
-  'task-lights', 'lights-wrong', 'idle-lights', 'task-wash', 'idle-wash'],
-(done, total) => {
+const CORE_CLIPS = ['welcome', 'intro-race', 'intro-dump',
+  'task-tires-prefix', 'task-tires-suffix', 'task-fuel-prefix', 'task-fuel-suffix',
+  'task-lights', 'task-wash', 'num-1', 'num-2', 'num-3', 'num-4', 'num-5'];
+const REST_CLIPS = ['num-6', 'num-7', 'num-8', 'num-9', 'num-10',
+  'praise-1', 'praise-2', 'goodbye-1', 'closing-1', 'closing-2', 'sleeping-1',
+  'idle-tires', 'demo-hint', 'fuel-over', 'fuel-more', 'idle-fuel',
+  'lights-wrong', 'idle-lights', 'idle-wash'];
+preload(CORE_CLIPS, (done, total) => {
   bootHint.textContent = `正在准备声音 ${done}/${total}`;
 }).then(failed => {
   bell.removeAttribute('disabled');
   bootHint.textContent = failed
     ? '有几条声音没准备好，也可以先玩（建议检查网络后重进）'
     : '准备好啦！按一下门铃，车库开张！';
+  preload(REST_CLIPS);
 });
 
 bell.addEventListener('pointerdown', async () => {

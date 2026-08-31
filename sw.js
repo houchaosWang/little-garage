@@ -1,5 +1,5 @@
 // 每次发布内容更新必须改VERSION（如garage-v3），否则iPad拿不到新资源
-const VERSION = 'garage-v5';
+const VERSION = 'garage-v6';
 const ASSETS = [
   '.', 'index.html', 'styles.css', 'manifest.webmanifest',
   'icons/icon-180.png', 'icons/icon-512.png',
