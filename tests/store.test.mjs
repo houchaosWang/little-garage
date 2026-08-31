@@ -60,3 +60,14 @@ test('recordGame 累计游戏统计', () => {
 test('localDate 格式 YYYY-MM-DD', () => {
   assert.match(localDate(new Date(2026, 0, 5)), /^2026-01-05$/);
 });
+
+test('残缺存档load时用默认值补全缺失字段', () => {
+  const st = fakeStorage();
+  st.setItem('garage-save-v1', '{"version":1,"skills":{}}');
+  const s = createStore(st, () => '2026-08-31');
+  const d = s.load();
+  assert.equal(d.skills.counting.level, 1);
+  assert.equal(d.skills.counting.streak, 0);
+  assert.equal(d.settings.dailyJobs, 4);
+  assert.deepEqual(d.stats, { daily: {}, byGame: {} });
+});
