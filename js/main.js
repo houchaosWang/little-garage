@@ -100,7 +100,14 @@ window.__guideHand = (a, b) => guideHand(stage, a, b);
 const rng = makeRng();
 const store = createStore(window.localStorage);
 let data = store.load();
-initParentPanel(store, () => data);
+initParentPanel(store, () => data, {
+  counting: { name: '数数·装轮胎', max: MAX_TIRE_LEVEL },
+  numerals: { name: '认数字·加油', max: MAX_FUEL_LEVEL },
+  colors: { name: '颜色·车灯', max: MAX_LIGHTS_LEVEL },
+  math: { name: '算数·石头题', max: MAX_MATH_LEVEL },
+  literacy: { name: '认字·搬箱', max: MAX_HANZI_LEVEL },
+  tracing: { name: '写字·描红', max: MAX_TRACE_LEVEL },
+});
 
 window.addEventListener('unhandledrejection', e => console.error('unhandled', e.reason));
 function handleLoopError(err) {

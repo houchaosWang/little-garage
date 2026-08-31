@@ -33,3 +33,12 @@ html, body { height: 100%; overflow: hidden; background: #FFF3DD; font-family: -
 
 #trace-box { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 50; background: rgba(255,243,221,0.6); }
 .trace-card { background: #FFFFFF; border: 6px solid #E8C97F; border-radius: 24px; padding: 18px; }
+
+#parent-panel, #parent-panel * { touch-action: auto; }
+.pp-card { max-height: 88vh; overflow-y: auto; }
+.pp-sec { font-size: 17px; color: #8A5A1F; border-top: 2px solid #EDD9AC; padding-top: 12px; margin-top: 2px; }
+.pp-map-row { display: flex; align-items: flex-start; gap: 10px; font-size: 15px; color: #6B4A12; }
+.pp-map-name { min-width: 118px; padding-top: 3px; }
+.pp-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.pp-chip { border-radius: 8px; padding: 3px 8px; font-size: 13px; white-space: nowrap; }
+.pp-stat { font-size: 14px; color: #6B4A12; }
