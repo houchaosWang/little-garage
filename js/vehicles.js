@@ -19,6 +19,7 @@ const wheel = (cx, cy, r = 30) => `
     <circle cx="${cx}" cy="${cy}" r="${r * 0.4}" fill="#B9B6AD"/>
   </g>`;
 
+// 每种车型：body(color)返回SVG内串；slots为需要装轮胎的锚点（舞台内相对本车原点）
 const TYPES = {
   race: {
     label: '赛车',
@@ -47,6 +48,12 @@ const TYPES = {
     fixedWheels: [],
   },
 };
+
+for (const t of Object.values(TYPES)) {
+  t.slots.forEach(Object.freeze);
+  Object.freeze(t.slots);
+  Object.freeze(t);
+}
 
 export const VEHICLE_TYPES = Object.keys(TYPES);
 
