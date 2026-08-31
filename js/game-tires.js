@@ -30,30 +30,32 @@ export function runTireGame(garage, customer, task, attachIdleHelp) {
 
     const slotY = 700;
     const slotGap = Math.min(100, 760 / task.count);
+    const ringR = Math.min(38, Math.max(24, slotGap * 0.42));
+    const hitR = Math.min(70, slotGap * 0.9);
     const slotX0 = 180;
     const slots = [];
     for (let i = 0; i < task.count; i++) {
       const cx = slotX0 + i * slotGap;
       const ring = el('g', {}, `
-        <circle cx="${cx}" cy="${slotY}" r="38" fill="none" stroke="#C89B4A" stroke-width="5" stroke-dasharray="10 8" style="animation: pulse-ring 1.4s infinite"/>
-        <text x="${cx}" y="${slotY + 10}" text-anchor="middle" font-size="30" fill="#C89B4A">${i + 1}</text>`);
+        <circle cx="${cx}" cy="${slotY}" r="${ringR}" fill="none" stroke="#C89B4A" stroke-width="5" stroke-dasharray="10 8" style="animation: pulse-ring 1.4s infinite"/>
+        <text x="${cx}" y="${slotY + 10}" text-anchor="middle" font-size="${ringR >= 34 ? 30 : 24}" fill="#C89B4A">${i + 1}</text>`);
       ring.dataset.filled = '';
       ring.dataset.cx = cx;
       layer.appendChild(ring);
       slots.push(ring);
     }
 
-    const rackX = 1000, rackY0 = 200;
+    const rackX = 1000, rackY0 = 170;
     const tires = [];
     for (let i = 0; i < task.rackCount; i++) {
       const col = i % 2, row = Math.floor(i / 2);
-      const t = el('g', { class: 'tire', transform: `translate(${rackX + col * 90} ${rackY0 + row * 84})` }, tireHTML);
-      t.dataset.home = `${rackX + col * 90},${rackY0 + row * 84}`;
+      const t = el('g', { class: 'tire', transform: `translate(${rackX + col * 90} ${rackY0 + row * 78})` }, tireHTML);
+      t.dataset.home = `${rackX + col * 90},${rackY0 + row * 78}`;
       layer.appendChild(t);
       tires.push(t);
     }
     layer.insertBefore(
-      el('rect', { x: rackX - 60, y: rackY0 - 60, width: 210, height: Math.ceil(task.rackCount / 2) * 84 + 90, rx: 14, fill: 'none', stroke: '#D9CBAD', 'stroke-width': 8 }),
+      el('rect', { x: rackX - 60, y: rackY0 - 60, width: 210, height: Math.ceil(task.rackCount / 2) * 78 + 90, rx: 14, fill: 'none', stroke: '#D9CBAD', 'stroke-width': 8 }),
       layer.firstChild,
     );
 
@@ -89,7 +91,7 @@ export function runTireGame(garage, customer, task, attachIdleHelp) {
     function onUp(e) {
       if (!drag || e.pointerId !== drag.id) return;
       const p = svgPoint(stage, e.clientX, e.clientY);
-      const near = slots.find(s => !s.dataset.filled && Math.hypot(p.x - s.dataset.cx, p.y - slotY) < 70);
+      const near = slots.find(s => !s.dataset.filled && Math.hypot(p.x - s.dataset.cx, p.y - slotY) < hitR);
       if (near) {
         near.dataset.filled = '1';
         drag.g.dataset.placed = '1';
