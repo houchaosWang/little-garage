@@ -16,6 +16,18 @@ const rng = makeRng();
 const store = createStore(window.localStorage);
 let data = store.load();
 
+window.addEventListener('unhandledrejection', e => console.error('unhandled', e.reason));
+function handleLoopError(err) {
+  console.error('job loop failed', err);
+  try {
+    const last = Number(sessionStorage.getItem('crash-ts') || 0);
+    if (Date.now() - last > 60000) {
+      sessionStorage.setItem('crash-ts', String(Date.now()));
+      location.reload();
+    }
+  } catch { location.reload(); }
+}
+
 function checkOrientation() {
   rotateTip.hidden = !(window.innerHeight > window.innerWidth);
 }
@@ -23,19 +35,19 @@ window.addEventListener('resize', checkOrientation);
 checkOrientation();
 
 preload(['welcome', 'intro-race', 'intro-dump', 'task-tires-prefix', 'task-tires-suffix',
-  'num-1', 'num-2', 'num-3', 'num-4', 'num-5', 'praise-1', 'praise-2', 'goodbye-1',
-  'closing-1', 'closing-2', 'sleeping-1', 'idle-tires']);
+  'num-1', 'num-2', 'num-3', 'num-4', 'num-5', 'num-6', 'num-7', 'num-8', 'num-9', 'num-10',
+  'praise-1', 'praise-2', 'goodbye-1', 'closing-1', 'closing-2', 'sleeping-1', 'idle-tires']);
 
 bell.addEventListener('pointerdown', async () => {
   unlock();
   sfx.ding();
   boot.hidden = true;
-  stage.hidden = false;
+  stage.removeAttribute('hidden');
   if (store.jobsToday(data) >= data.settings.dailyJobs) {
     showSleeping();
   } else {
     await say('welcome');
-    nextJob();
+    nextJob().catch(handleLoopError);
   }
 }, { once: true });
 
@@ -66,7 +78,7 @@ async function nextJob() {
   if (store.jobsToday(data) >= data.settings.dailyJobs) {
     await showClosing();
   } else {
-    nextJob();
+    nextJob().catch(handleLoopError);
   }
 }
 
@@ -98,4 +110,9 @@ function showSleeping() {
     <text x="840" y="360" font-size="40" fill="#F5E6A8">Z</text>
     <text x="880" y="320" font-size="52" fill="#F5E6A8">Z</text>`;
   say('sleeping-1');
+  const recheck = () => {
+    if (store.jobsToday(store.load()) < data.settings.dailyJobs) location.reload();
+  };
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) recheck(); });
+  window.addEventListener('pageshow', recheck);
 }

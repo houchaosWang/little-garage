@@ -42,12 +42,18 @@ export function createGarage(stage, rng) {
         <path d="M66 34 Q73 43 66 52" stroke="#8A5A1F" stroke-width="4" fill="none" stroke-linecap="round"/>
       </g>
       <text x="${52 + 40 + (w - 92) / 2}" y="55" text-anchor="middle" font-size="34" fill="#6B4A12">${text}</text>`;
+    let speaking = false;
+    const speak = () => {
+      if (speaking) return;
+      speaking = true;
+      say(...voiceNames).then(() => { speaking = false; });
+    };
     g.querySelector('.replay').addEventListener('pointerdown', e => {
       e.stopPropagation();
-      say(...voiceNames);
+      speak();
     });
     layers.bubble.appendChild(g);
-    say(...voiceNames);
+    speak();
   }
 
   function clearBubble() { layers.bubble.innerHTML = ''; }
@@ -56,10 +62,10 @@ export function createGarage(stage, rng) {
     vehicle.el.style.transition = 'none';
     vehicle.el.setAttribute('transform', 'translate(1400 560)');
     layers.vehicle.appendChild(vehicle.el);
-    requestAnimationFrame(() => {
+    requestAnimationFrame(() => requestAnimationFrame(() => {
       vehicle.el.style.transition = 'transform 1.6s cubic-bezier(.25,.9,.35,1)';
       vehicle.el.setAttribute('transform', 'translate(480 560)');
-    });
+    }));
     sfx.horn();
     return new Promise(res => setTimeout(res, 1700));
   }
@@ -81,10 +87,10 @@ export function createGarage(stage, rng) {
       });
       c.style.transition = `transform ${1 + rng.int(0, 8) / 10}s ease-out, opacity 1.4s`;
       fx.appendChild(c);
-      requestAnimationFrame(() => {
+      requestAnimationFrame(() => requestAnimationFrame(() => {
         c.style.transform = `translate(${rng.int(-160, 160)}px, ${-rng.int(380, 640)}px)`;
         c.style.opacity = '0';
-      });
+      }));
     }
     setTimeout(() => { fx.innerHTML = ''; }, 1600);
     return new Promise(res => setTimeout(res, 1400));
