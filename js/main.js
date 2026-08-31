@@ -3,10 +3,58 @@ import { makeRng } from './rng.js';
 import { createStore } from './store.js';
 import { createGarage } from './garage.js';
 import { effectiveLevel, recordOutcome } from './difficulty.js';
-import { genTireTask, MAX_TIRE_LEVEL } from './taskgen.js';
+import {
+  genTireTask, MAX_TIRE_LEVEL,
+  genFuelTask, MAX_FUEL_LEVEL,
+  genLightsTask, MAX_LIGHTS_LEVEL,
+} from './taskgen.js';
 import { runTireGame } from './game-tires.js';
+import { runFuelGame } from './game-fuel.js';
+import { runLightsGame } from './game-lights.js';
+import { runWashGame } from './game-wash.js';
 import { attachIdleHelp, guideHand } from './guide.js';
 import { initParentPanel } from './parent.js';
+import { PALETTE } from './vehicles.js';
+
+const GAME_DEFS = {
+  tires: {
+    skill: 'counting', max: MAX_TIRE_LEVEL,
+    gen: (rng, lvl) => genTireTask(rng, lvl),
+    run: runTireGame,
+    bubble: t => `帮我装上 ${t.count} 个轮胎吧！`,
+    voice: t => ['task-tires-prefix', `num-${t.count}`, 'task-tires-suffix'],
+  },
+  fuel: {
+    skill: 'numerals', max: MAX_FUEL_LEVEL,
+    gen: (rng, lvl) => genFuelTask(rng, lvl),
+    run: runFuelGame,
+    bubble: t => `加油加到数字 ${t.target} 就停哦！`,
+    voice: t => ['task-fuel-prefix', `num-${t.target}`, 'task-fuel-suffix'],
+  },
+  lights: {
+    skill: 'colors', max: MAX_LIGHTS_LEVEL,
+    gen: (rng, lvl, cust) => genLightsTask(rng, lvl, cust.color, Object.keys(PALETTE)),
+    run: runLightsGame,
+    bubble: () => '帮我换上一样颜色的车灯吧！',
+    voice: () => ['task-lights'],
+  },
+  wash: {
+    skill: null, max: 0,
+    gen: () => null,
+    run: runWashGame,
+    bubble: () => '帮我洗个澡，擦得亮晶晶！',
+    voice: () => ['task-wash'],
+  },
+};
+
+function pickGames(rng) {
+  const pool = ['tires', 'fuel', 'lights'];
+  const first = rng.pick(pool);
+  const second = rng.pick(pool.filter(g => g !== first));
+  const list = [first, second];
+  if (rng.next() < 0.25) list.push('wash');
+  return list;
+}
 
 const boot = document.getElementById('boot');
 const bell = document.getElementById('bell');
@@ -70,18 +118,21 @@ async function nextJob() {
   const customer = garage.newCustomer();
   await garage.driveIn(customer.vehicle);
 
-  const level = effectiveLevel(data.skills.counting, MAX_TIRE_LEVEL);
-  const task = genTireTask(rng, level);
-  garage.showBubble(
-    `帮我装上 ${task.count} 个轮胎吧！`,
-    [customer.vehicle.meta.intro, 'task-tires-prefix', `num-${task.count}`, 'task-tires-suffix'],
-  );
-
-  window.__firstTirePlay = !data.stats.byGame.tires;
-  const outcome = await runTireGame(garage, customer, task, attachIdleHelp);
-
-  data.skills.counting = recordOutcome(data.skills.counting, outcome, MAX_TIRE_LEVEL);
-  store.recordGame(data, 'tires', outcome);
+  const games = pickGames(rng);
+  for (let i = 0; i < games.length; i++) {
+    const key = games[i];
+    const def = GAME_DEFS[key];
+    const skill = def.skill ? data.skills[def.skill] : null;
+    const lvl = skill ? effectiveLevel(skill, def.max) : 1;
+    const task = def.gen(rng, lvl, customer);
+    const voices = def.voice(task).slice();
+    if (i === 0) voices.unshift(customer.vehicle.meta.intro);
+    garage.showBubble(def.bubble(task), voices);
+    window.__firstTirePlay = key === 'tires' && !data.stats.byGame.tires;
+    const outcome = await def.run(garage, customer, task, attachIdleHelp);
+    if (skill) data.skills[def.skill] = recordOutcome(skill, outcome, def.max);
+    store.recordGame(data, key, outcome);
+  }
   store.recordJob(data);
 
   garage.clearBubble();
