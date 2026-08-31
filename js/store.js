@@ -58,5 +58,12 @@ export function createStore(storage, todayFn = localDate) {
     data.stats.byGame[game] = g;
     save(data);
   }
-  return { load, save, jobsToday, recordJob, recordGame };
+  function reopenToday(data) {
+    delete data.stats.daily[todayFn()];
+    save(data);
+  }
+  function wipe() {
+    try { storage.removeItem(KEY); } catch {}
+  }
+  return { load, save, jobsToday, recordJob, recordGame, reopenToday, wipe };
 }

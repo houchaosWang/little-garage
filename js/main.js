@@ -6,6 +6,7 @@ import { effectiveLevel, recordOutcome } from './difficulty.js';
 import { genTireTask, MAX_TIRE_LEVEL } from './taskgen.js';
 import { runTireGame } from './game-tires.js';
 import { attachIdleHelp, guideHand } from './guide.js';
+import { initParentPanel } from './parent.js';
 
 const boot = document.getElementById('boot');
 const bell = document.getElementById('bell');
@@ -17,6 +18,7 @@ window.__guideHand = (a, b) => guideHand(stage, a, b);
 const rng = makeRng();
 const store = createStore(window.localStorage);
 let data = store.load();
+initParentPanel(store, () => data);
 
 window.addEventListener('unhandledrejection', e => console.error('unhandled', e.reason));
 function handleLoopError(err) {

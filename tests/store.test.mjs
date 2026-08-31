@@ -7,6 +7,7 @@ function fakeStorage() {
   return {
     getItem: k => (m.has(k) ? m.get(k) : null),
     setItem: (k, v) => m.set(k, String(v)),
+    removeItem: k => m.delete(k),
   };
 }
 
@@ -70,4 +71,25 @@ test('残缺存档load时用默认值补全缺失字段', () => {
   assert.equal(d.skills.counting.streak, 0);
   assert.equal(d.settings.dailyJobs, 4);
   assert.deepEqual(d.stats, { daily: {}, byGame: {} });
+});
+
+test('reopenToday 清除当日计数并立即生效', () => {
+  const st = fakeStorage();
+  const s = createStore(st, () => '2026-08-31');
+  const d = s.load();
+  s.recordJob(d);
+  s.recordJob(d);
+  s.reopenToday(d);
+  assert.equal(s.jobsToday(d), 0);
+  assert.equal(s.jobsToday(s.load()), 0);
+});
+
+test('wipe 后回默认档', () => {
+  const st = fakeStorage();
+  const s = createStore(st, () => '2026-08-31');
+  const d = s.load();
+  d.settings.dailyJobs = 9;
+  s.save(d);
+  s.wipe();
+  assert.equal(s.load().settings.dailyJobs, 4);
 });

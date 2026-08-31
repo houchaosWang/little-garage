@@ -19,3 +19,14 @@ html, body { height: 100%; overflow: hidden; background: #FFF3DD; font-family: -
 @keyframes pop { 0% { transform: scale(0.4); opacity: 0; } 70% { transform: scale(1.15); } 100% { transform: scale(1); opacity: 1; } }
 @keyframes pulse-ring { 0%,100% { opacity: 0.5; } 50% { opacity: 1; } }
 .tire-inner { transform-box: fill-box; transform-origin: center; }
+
+#parent-panel { position: fixed; inset: 0; background: rgba(43,58,92,0.55); display: flex; align-items: center; justify-content: center; z-index: 200; }
+.pp-card { background: #FFF3DD; border-radius: 24px; padding: 28px 32px; width: min(440px, 86vw); display: flex; flex-direction: column; gap: 14px; }
+.pp-title { font-size: 24px; color: #8A5A1F; text-align: center; }
+.pp-row { display: flex; align-items: center; justify-content: space-between; font-size: 20px; color: #6B4A12; }
+.pp-step { display: flex; align-items: center; gap: 14px; }
+.pp-btn { width: 52px; height: 52px; border-radius: 50%; border: none; background: #F5B324; color: #6B4A12; font-size: 28px; }
+.pp-num { font-size: 26px; min-width: 40px; text-align: center; color: #6B4A12; }
+.pp-hint { font-size: 15px; color: #A0763A; text-align: right; margin-top: -8px; }
+.pp-wide { width: 100%; padding: 14px 0; border: none; border-radius: 14px; background: #FFE1A6; color: #6B4A12; font-size: 19px; }
+.pp-danger { background: #F3C1B8; color: #8A2F1D; }
