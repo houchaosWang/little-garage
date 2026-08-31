@@ -1,6 +1,6 @@
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
-import { extname, join, normalize } from 'node:path';
+import { extname, join, normalize, sep } from 'node:path';
 
 const TYPES = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.mjs': 'text/javascript',
@@ -8,13 +8,14 @@ const TYPES = {
   '.mp3': 'audio/mpeg', '.png': 'image/png', '.svg': 'image/svg+xml',
 };
 const root = process.cwd();
+const base = normalize(root).endsWith(sep) ? normalize(root) : normalize(root) + sep;
 
 createServer(async (req, res) => {
   try {
     let p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
     if (p.endsWith('/')) p += 'index.html';
     const file = normalize(join(root, p));
-    if (!file.startsWith(normalize(root))) throw new Error('escape');
+    if (!file.startsWith(base)) throw new Error('escape');
     const data = await readFile(file);
     res.writeHead(200, { 'content-type': TYPES[extname(file).toLowerCase()] || 'application/octet-stream', 'cache-control': 'no-store' });
     res.end(data);
