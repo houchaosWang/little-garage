@@ -1,4 +1,4 @@
-import { sfx, say } from './audio.js';
+import { sfx, say, sayNow } from './audio.js';
 
 const SVG = 'http://www.w3.org/2000/svg';
 const el = (tag, attrs = {}, html = '') => {
@@ -59,7 +59,7 @@ export function runTireGame(garage, customer, task, attachIdleHelp) {
 
     const idle = attachIdleHelp(stage, () => {
       helps += 1;
-      say('idle-tires');
+      sayNow('idle-tires');
       const freeTire = tires.find(t => !t.dataset.placed);
       const freeSlot = slots.find(s => !s.dataset.filled);
       if (freeTire && freeSlot) window.__guideHand?.(freeTire, freeSlot);
@@ -96,7 +96,7 @@ export function runTireGame(garage, customer, task, attachIdleHelp) {
         drag.g.querySelector('.tire-inner').style.animation = 'pop 0.35s ease-out';
         placed += 1;
         sfx.snap();
-        say(`num-${placed}`);
+        sayNow(`num-${placed}`);
         near.querySelector('circle').style.animation = 'none';
         near.querySelector('circle').setAttribute('stroke-dasharray', 'none');
         if (placed === task.count) finish();

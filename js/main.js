@@ -1,4 +1,4 @@
-import { unlock, sfx, say, preload } from './audio.js';
+import { unlock, sfx, say, sayNow, preload } from './audio.js';
 import { makeRng } from './rng.js';
 import { createStore } from './store.js';
 import { createGarage } from './garage.js';
@@ -83,10 +83,10 @@ async function nextJob() {
   store.recordJob(data);
 
   garage.clearBubble();
+  sayNow(rng.pick(['praise-1', 'praise-2']));
   await garage.celebrate();
-  await say(rng.pick(['praise-1', 'praise-2']));
+  say('goodbye-1');
   await garage.driveOut(customer.vehicle);
-  await say('goodbye-1');
 
   if (store.jobsToday(data) >= data.settings.dailyJobs) {
     await showClosing();

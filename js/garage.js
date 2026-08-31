@@ -1,5 +1,5 @@
 import { buildVehicle, VEHICLE_TYPES, PALETTE, NAMES } from './vehicles.js';
-import { say, sfx } from './audio.js';
+import { sayNow, sfx } from './audio.js';
 
 const SVG = 'http://www.w3.org/2000/svg';
 const el = (tag, attrs = {}, html = '') => {
@@ -46,7 +46,7 @@ export function createGarage(stage, rng) {
     const speak = () => {
       if (speaking) return;
       speaking = true;
-      say(...voiceNames).then(() => { speaking = false; });
+      sayNow(...voiceNames).then(() => { speaking = false; });
     };
     g.querySelector('.replay').addEventListener('pointerdown', e => {
       e.stopPropagation();

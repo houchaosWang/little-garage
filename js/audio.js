@@ -62,33 +62,65 @@ export function preload(names, onProgress) {
     .then(() => failed);
 }
 
-function playBuffer(buf) {
+let gen = 0;
+let current = null;
+
+function stopCurrent() {
+  if (current) {
+    const c = current;
+    current = null;
+    try { c.src.onended = null; c.src.stop(); } catch {}
+    c.res();
+  }
+}
+
+function playBuffer(buf, myGen) {
   return new Promise(res => {
+    if (myGen !== gen) return res();
     try {
       const src = ctx.createBufferSource();
       src.buffer = buf;
       src.connect(ctx.destination);
-      src.onended = res;
+      current = { src, res };
+      const done = () => {
+        if (current && current.src === src) current = null;
+        res();
+      };
+      src.onended = done;
       src.start();
-      setTimeout(res, buf.duration * 1000 + 500);
+      setTimeout(done, buf.duration * 1000 + 500);
     } catch { res(); }
   });
 }
 
+async function speak(names, myGen) {
+  for (const n of names) {
+    if (myGen !== gen) return;
+    try {
+      const buf = await Promise.race([
+        loadBuffer(n),
+        new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 3000)),
+      ]);
+      if (myGen !== gen) return;
+      if (ctx && ctx.state !== 'running') { try { await ctx.resume(); } catch {} }
+      await playBuffer(buf, myGen);
+    } catch { /* 缺音频不阻塞游戏 */ }
+  }
+}
+
 let queue = Promise.resolve();
+
 export function say(...names) {
-  queue = queue.then(async () => {
-    for (const n of names) {
-      try {
-        const buf = await Promise.race([
-          loadBuffer(n),
-          new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 3000)),
-        ]);
-        if (ctx && ctx.state !== 'running') { try { await ctx.resume(); } catch {} }
-        await playBuffer(buf);
-      } catch { /* 缺音频不阻塞游戏 */ }
-    }
-  });
+  const myGen = gen;
+  queue = queue.then(() => speak(names, myGen));
+  return queue;
+}
+
+export function sayNow(...names) {
+  gen += 1;
+  const myGen = gen;
+  stopCurrent();
+  queue = Promise.resolve().then(() => speak(names, myGen));
   return queue;
 }
 
