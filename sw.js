@@ -1,8 +1,9 @@
-// 每次发布内容更新必须改VERSION（如garage-v2），否则iPad拿不到新资源
-const VERSION = 'garage-v2';
+// 每次发布内容更新必须改VERSION（如garage-v3），否则iPad拿不到新资源
+const VERSION = 'garage-v3';
 const ASSETS = [
   '.', 'index.html', 'styles.css', 'manifest.webmanifest',
   'icons/icon-180.png', 'icons/icon-512.png',
+  'audio/silence.wav',
   'js/main.js', 'js/garage.js', 'js/game-tires.js', 'js/vehicles.js', 'js/guide.js',
   'js/audio.js', 'js/store.js', 'js/difficulty.js', 'js/taskgen.js', 'js/rng.js',
 ].concat([

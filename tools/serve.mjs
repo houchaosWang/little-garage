@@ -5,7 +5,7 @@ import { extname, join, normalize, sep } from 'node:path';
 const TYPES = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.mjs': 'text/javascript',
   '.css': 'text/css', '.json': 'application/json', '.webmanifest': 'application/manifest+json',
-  '.mp3': 'audio/mpeg', '.png': 'image/png', '.svg': 'image/svg+xml',
+  '.mp3': 'audio/mpeg', '.wav': 'audio/wav', '.png': 'image/png', '.svg': 'image/svg+xml',
 };
 const root = process.cwd();
 const base = normalize(root).endsWith(sep) ? normalize(root) : normalize(root) + sep;

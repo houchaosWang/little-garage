@@ -21,7 +21,7 @@
   <p>把 iPad 横过来玩哦</p>
 </div>
 <div id="boot" class="boot">
-  <button id="bell" aria-label="按门铃开始">
+  <button id="bell" aria-label="按门铃开始" disabled>
     <svg viewBox="0 0 120 120" width="180" height="180" aria-hidden="true">
       <circle cx="60" cy="60" r="54" fill="#F5B324"/>
       <circle cx="60" cy="60" r="44" fill="#FFD966"/>
@@ -29,7 +29,7 @@
       <circle cx="60" cy="74" r="5" fill="#8A5A1F"/>
     </svg>
   </button>
-  <p class="boot-hint">按一下门铃，车库开张啦！</p>
+  <p class="boot-hint" id="boot-hint">正在准备声音……</p>
 </div>
 <svg id="stage" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid meet" hidden></svg>
 <script type="module" src="js/main.js"></script>

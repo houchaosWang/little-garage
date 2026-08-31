@@ -6,6 +6,7 @@ html, body { height: 100%; overflow: hidden; background: #FFF3DD; font-family: -
 .boot[hidden] { display: none; }
 #bell { border: none; background: none; cursor: pointer; animation: bell-bounce 1.6s ease-in-out infinite; }
 #bell:active { transform: scale(0.92); }
+#bell:disabled { opacity: 0.35; animation: none; pointer-events: none; }
 .boot-hint { font-size: 28px; color: #8A5A1F; }
 @keyframes bell-bounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
 

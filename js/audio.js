@@ -1,5 +1,6 @@
 let ctx = null;
 let unlocked = false;
+let keepalive = null;
 const buffers = new Map();
 
 function ensureCtx() {
@@ -9,12 +10,29 @@ function ensureCtx() {
   return ctx;
 }
 
+function wake() {
+  if (!unlocked) return;
+  const c = ensureCtx();
+  if (c && c.state !== 'running') { try { c.resume(); } catch { /* iOS需要手势时会静默失败，下次触摸再试 */ } }
+  if (keepalive && keepalive.paused) keepalive.play().catch(() => {});
+}
+
 export function unlock() {
   if (unlocked) return;
   unlocked = true;
   const c = ensureCtx();
-  if (c && c.state === 'suspended') c.resume();
+  if (c && c.state !== 'running') { try { c.resume(); } catch {} }
+  try {
+    keepalive = new Audio('audio/silence.wav');
+    keepalive.loop = true;
+    keepalive.play().catch(() => {});
+  } catch { keepalive = null; }
 }
+
+document.addEventListener('pointerdown', wake, true);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) wake(); });
+window.addEventListener('pageshow', wake);
+window.addEventListener('focus', wake);
 
 function loadBuffer(name) {
   if (!buffers.has(name)) {
@@ -32,8 +50,16 @@ function loadBuffer(name) {
   return buffers.get(name);
 }
 
-export function preload(names) {
-  for (const n of names) loadBuffer(n).catch(() => {});
+export function preload(names, onProgress) {
+  let done = 0, failed = 0;
+  const total = names.length;
+  const tick = ok => {
+    done += 1;
+    if (!ok) failed += 1;
+    if (onProgress) onProgress(done, total);
+  };
+  return Promise.all(names.map(n => loadBuffer(n).then(() => tick(true), () => tick(false))))
+    .then(() => failed);
 }
 
 function playBuffer(buf) {
@@ -58,7 +84,7 @@ export function say(...names) {
           loadBuffer(n),
           new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 3000)),
         ]);
-        if (ctx && ctx.state === 'suspended') await ctx.resume();
+        if (ctx && ctx.state !== 'running') { try { await ctx.resume(); } catch {} }
         await playBuffer(buf);
       } catch { /* 缺音频不阻塞游戏 */ }
     }
