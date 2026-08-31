@@ -58,6 +58,7 @@ export function runTireGame(garage, customer, task, attachIdleHelp) {
     );
 
     const idle = attachIdleHelp(stage, () => {
+      if (document.getElementById('parent-panel')) return;
       helps += 1;
       sayNow('idle-tires');
       const freeTire = tires.find(t => !t.dataset.placed);
@@ -112,9 +113,9 @@ export function runTireGame(garage, customer, task, attachIdleHelp) {
     }
 
     stage.addEventListener('pointerdown', onDown);
-    stage.addEventListener('pointermove', onMove);
-    stage.addEventListener('pointerup', onUp);
-    stage.addEventListener('pointercancel', onUp);
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointercancel', onUp);
 
     if (window.__firstTirePlay) {
       setTimeout(() => {
@@ -125,9 +126,9 @@ export function runTireGame(garage, customer, task, attachIdleHelp) {
 
     function finish() {
       stage.removeEventListener('pointerdown', onDown);
-      stage.removeEventListener('pointermove', onMove);
-      stage.removeEventListener('pointerup', onUp);
-      stage.removeEventListener('pointercancel', onUp);
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointercancel', onUp);
       idle.dispose();
       setTimeout(() => {
         layer.innerHTML = '';
