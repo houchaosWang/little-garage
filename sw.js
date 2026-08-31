@@ -1,3 +1,4 @@
+// 每次发布内容更新必须改VERSION（如garage-v2），否则iPad拿不到新资源
 const VERSION = 'garage-v1';
 const ASSETS = [
   '.', 'index.html', 'styles.css', 'manifest.webmanifest',
@@ -25,6 +26,7 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   e.respondWith(
-    caches.match(e.request, { ignoreSearch: true }).then(hit => hit || fetch(e.request)),
+    caches.match(e.request, { ignoreSearch: true }).then(hit => hit
+      || fetch(e.request).catch(() => (e.request.mode === 'navigate' ? caches.match('.') : Promise.reject(new Error('offline'))))),
   );
 });
