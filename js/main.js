@@ -1,4 +1,4 @@
-import { unlock, sfx, say, sayNow, preload } from './audio.js';
+import { unlock, sfx, say, sayNow, preload, setPaused } from './audio.js';
 import { makeRng } from './rng.js';
 import { createStore, localDate } from './store.js';
 import { createGarage } from './garage.js';
@@ -23,7 +23,7 @@ import { runHanziGame } from './game-hanzi.js';
 import { runTraceGame } from './game-trace.js';
 import { attachIdleHelp, guideHand } from './guide.js';
 import { initParentPanel } from './parent.js';
-import { PALETTE } from './vehicles.js';
+import { PALETTE, addWheels } from './vehicles.js';
 
 const GAME_DEFS = {
   tires: {
@@ -122,7 +122,9 @@ function handleLoopError(err) {
 }
 
 function checkOrientation() {
-  rotateTip.hidden = !(window.innerHeight > window.innerWidth);
+  const portrait = window.innerHeight > window.innerWidth;
+  rotateTip.hidden = !portrait;
+  setPaused(portrait);
 }
 window.addEventListener('resize', checkOrientation);
 checkOrientation();
@@ -214,6 +216,8 @@ async function nextJob() {
     }
     store.recordGame(data, key, outcome);
   }
+  addWheels(customer.vehicle);
+  sfx.snap();
   store.recordJob(data);
 
   garage.clearBubble();

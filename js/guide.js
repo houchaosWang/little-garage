@@ -3,11 +3,13 @@ const SVG = 'http://www.w3.org/2000/svg';
 export function attachIdleHelp(stage, onIdle, ms = 12000) {
   let timer = null;
   let disposed = false;
-  const reset = () => {
+  let fires = 0;
+  const arm = () => {
     if (disposed) return;
     clearTimeout(timer);
-    timer = setTimeout(() => { onIdle(); reset(); }, ms);
+    timer = setTimeout(() => { fires += 1; onIdle(fires); arm(); }, ms);
   };
+  const reset = () => { fires = 0; arm(); };
   const onAny = () => reset();
   stage.addEventListener('pointerdown', onAny);
   reset();
@@ -19,6 +21,16 @@ export function attachIdleHelp(stage, onIdle, ms = 12000) {
       stage.removeEventListener('pointerdown', onAny);
     },
   };
+}
+
+export function pulse(el) {
+  if (!el) return;
+  el.style.transformBox = 'fill-box';
+  el.style.transformOrigin = 'center';
+  el.animate(
+    [{ transform: 'scale(1)' }, { transform: 'scale(1.18)' }, { transform: 'scale(1)' }],
+    { duration: 450, iterations: 3, easing: 'ease-in-out' },
+  );
 }
 
 // stage 的 viewBox 与实际渲染像素通常不是 1:1（preserveAspectRatio 会缩放+留白），

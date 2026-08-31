@@ -1,5 +1,6 @@
 import { sfx, sayNow } from './audio.js';
 import { CHARSET } from './taskgen.js';
+import { pulse } from './guide.js';
 
 const SVG = 'http://www.w3.org/2000/svg';
 const el = (tag, attrs = {}, html = '') => {
@@ -33,12 +34,13 @@ export function runHanziGame(garage, customer, task, attachIdleHelp) {
       crates.push(c);
     });
 
-    const idle = attachIdleHelp(stage, () => {
+    const idle = attachIdleHelp(stage, (fires) => {
       if (document.getElementById('parent-panel')) return;
       helps += 1;
       sayNow('idle-hanzi', `char-${task.answerIndex + 1}`);
       const right = crates.find(c => Number(c.dataset.ci) === task.answerIndex);
       if (right) window.__guideHand?.(right, right);
+      if (fires >= 2) pulse(crates.find(c => Number(c.dataset.ci) === task.answerIndex));
     });
 
     function onDown(e) {

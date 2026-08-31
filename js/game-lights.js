@@ -1,5 +1,6 @@
 import { sfx, sayNow } from './audio.js';
 import { PALETTE } from './vehicles.js';
+import { pulse } from './guide.js';
 
 const SVG = 'http://www.w3.org/2000/svg';
 
@@ -31,13 +32,14 @@ export function runLightsGame(garage, customer, task, attachIdleHelp) {
       bulbs.push(b);
     });
 
-    const idle = attachIdleHelp(stage, () => {
+    const idle = attachIdleHelp(stage, (fires) => {
       if (document.getElementById('parent-panel')) return;
       helps += 1;
       sayNow('idle-lights');
       const right = bulbs.find(x => x.dataset.color === task.answer);
       const socket = layer.querySelector('#light-socket');
       if (right && socket) window.__guideHand?.(right, socket);
+      if (fires >= 2) pulse(bulbs.find(x => x.dataset.color === task.answer));
     });
 
     function onDown(e) {

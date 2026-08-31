@@ -1,5 +1,6 @@
 import { sfx, sayNow } from './audio.js';
 import { CHARSET } from './taskgen.js';
+import { pulse } from './guide.js';
 
 export function runTraceGame(garage, customer, task, attachIdleHelp) {
   return new Promise(resolve => {
@@ -14,10 +15,11 @@ export function runTraceGame(garage, customer, task, attachIdleHelp) {
     box.innerHTML = '<div class="trace-card"><div id="trace-target"></div></div>';
     document.body.appendChild(box);
 
-    const idle = attachIdleHelp(document, () => {
+    const idle = attachIdleHelp(document, (fires) => {
       if (document.getElementById('parent-panel')) return;
       helps += 1;
       sayNow('idle-trace');
+      if (fires >= 2) pulse(document.querySelector('.trace-card'));
     });
 
     function finish(aborted) {

@@ -1,5 +1,6 @@
 import { sfx, sayNow } from './audio.js';
 import { makeRng } from './rng.js';
+import { pulse } from './guide.js';
 
 const SVG = 'http://www.w3.org/2000/svg';
 
@@ -31,12 +32,13 @@ export function runWashGame(garage, customer, task, attachIdleHelp) {
       spots.push(s);
     }
 
-    const idle = attachIdleHelp(stage, () => {
+    const idle = attachIdleHelp(stage, (fires) => {
       if (document.getElementById('parent-panel')) return;
       helps += 1;
       sayNow('idle-wash');
       const live = spots.filter(s => s.dataset.alive);
       if (live.length >= 1) window.__guideHand?.(live[0], live[live.length - 1]);
+      if (fires >= 2) { const live = spots.filter(s => s.dataset.alive); pulse(live[0]); }
     });
 
     function tryWipe(e) {

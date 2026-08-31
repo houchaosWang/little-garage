@@ -1,4 +1,5 @@
 import { sfx, say, sayNow } from './audio.js';
+import { pulse } from './guide.js';
 
 const SVG = 'http://www.w3.org/2000/svg';
 const el = (tag, attrs = {}, html = '') => {
@@ -60,13 +61,14 @@ export function runMathGame(garage, customer, task, attachIdleHelp) {
       plates.push(p);
     });
 
-    const idle = attachIdleHelp(stage, () => {
+    const idle = attachIdleHelp(stage, (fires) => {
       if (document.getElementById('parent-panel')) return;
       if (busy) return;
       helps += 1;
       sayNow('idle-math');
       const right = plates.find(pl => Number(pl.dataset.val) === task.answer);
       if (right) window.__guideHand?.(right, right);
+      if (fires >= 2) pulse(plates.find(pl => Number(pl.dataset.val) === task.answer));
     });
 
     async function pulseCount(seq) {

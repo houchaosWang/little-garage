@@ -11,10 +11,19 @@ function ensureCtx() {
 }
 
 function wake() {
+  if (window.innerHeight > window.innerWidth) return;
   if (!unlocked) return;
   const c = ensureCtx();
   if (c && c.state !== 'running') { try { c.resume(); } catch { /* iOS需要手势时会静默失败，下次触摸再试 */ } }
   if (keepalive && keepalive.paused) keepalive.play().catch(() => {});
+}
+
+export function setPaused(p) {
+  if (!ctx) return;
+  try {
+    if (p) ctx.suspend();
+    else if (unlocked) ctx.resume();
+  } catch {}
 }
 
 export function unlock() {

@@ -1,4 +1,5 @@
 import { sfx, sayNow } from './audio.js';
+import { pulse } from './guide.js';
 
 const SVG = 'http://www.w3.org/2000/svg';
 
@@ -39,11 +40,12 @@ export function runFuelGame(garage, customer, task, attachIdleHelp) {
     let raf = null;
     let last = 0;
 
-    const idle = attachIdleHelp(stage, () => {
+    const idle = attachIdleHelp(stage, (fires) => {
       if (document.getElementById('parent-panel')) return;
       helps += 1;
       sayNow('idle-fuel');
       window.__guideHand?.(btn, btn);
+      if (fires >= 2) pulse(btn);
     });
 
     function render() {

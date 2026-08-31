@@ -66,3 +66,8 @@ export function buildVehicle(type, colorName, { missingWheels = false } = {}) {
   g.innerHTML = t.body(c) + wheels;
   return { el: g, meta: t, slots: t.slots.map(s => ({ ...s })) };
 }
+
+export function addWheels(vehicle) {
+  if (vehicle.el.querySelector('.v-wheel')) return;
+  vehicle.el.innerHTML += vehicle.slots.map(s => wheel(s.x, s.y)).join('');
+}

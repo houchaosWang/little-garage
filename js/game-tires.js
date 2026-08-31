@@ -1,4 +1,5 @@
 import { sfx, say, sayNow } from './audio.js';
+import { pulse } from './guide.js';
 
 const SVG = 'http://www.w3.org/2000/svg';
 const el = (tag, attrs = {}, html = '') => {
@@ -59,13 +60,14 @@ export function runTireGame(garage, customer, task, attachIdleHelp) {
       layer.firstChild,
     );
 
-    const idle = attachIdleHelp(stage, () => {
+    const idle = attachIdleHelp(stage, (fires) => {
       if (document.getElementById('parent-panel')) return;
       helps += 1;
       sayNow('idle-tires');
       const freeTire = tires.find(t => !t.dataset.placed);
       const freeSlot = slots.find(s => !s.dataset.filled);
       if (freeTire && freeSlot) window.__guideHand?.(freeTire, freeSlot);
+      if (fires >= 2) { const ft = tires.find(t => !t.dataset.placed); const fs = slots.find(s => !s.dataset.filled); pulse(ft); pulse(fs); }
     });
 
     let drag = null;
