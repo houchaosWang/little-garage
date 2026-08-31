@@ -8,7 +8,11 @@ export function localDate(now = new Date()) {
 export function defaultSave() {
   return {
     version: 1,
-    skills: { counting: { level: 1, streak: 0 } },
+    skills: {
+      counting: { level: 1, streak: 0 },
+      numerals: { level: 1, streak: 0 },
+      colors: { level: 1, streak: 0 },
+    },
     stats: { daily: {}, byGame: {} },
     settings: { dailyJobs: 4 },
   };

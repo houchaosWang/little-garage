@@ -93,3 +93,13 @@ test('wipe 后回默认档', () => {
   s.wipe();
   assert.equal(s.load().settings.dailyJobs, 4);
 });
+
+test('旧档自动补全新技能字段且不动旧进度', () => {
+  const st = fakeStorage();
+  st.setItem('garage-save-v1', JSON.stringify({ version: 1, skills: { counting: { level: 2.5, streak: 1 } } }));
+  const s = createStore(st, () => '2026-08-31');
+  const d = s.load();
+  assert.equal(d.skills.counting.level, 2.5);
+  assert.equal(d.skills.numerals.level, 1);
+  assert.equal(d.skills.colors.level, 1);
+});
