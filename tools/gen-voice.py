@@ -29,9 +29,35 @@ LINES = {
     "idle-lights": "点一点和车身颜色一样的灯泡！",
     "task-wash": "帮我洗个澡吧，擦得亮晶晶！",
     "idle-wash": "用手指把泥点点擦掉试试看！",
+    "task-math": "帮我算一道题吧！",
+    "math-jia": "加",
+    "math-jian": "减",
+    "math-dengyu": "等于",
+    "math-dengyu-ji": "等于几呀？",
+    "math-yiqi": "我们一起数！",
+    "math-wrong": "还差一点点，我们一起数一数吧！",
+    "math-duila": "对啦！",
+    "math-zailai": "再装上",
+    "math-nazou": "拿走",
+    "idle-math": "点一点下面正确的数字！",
+    "task-hanzi-prefix": "帮我找到",
+    "task-hanzi-suffix": "字的箱子！",
+    "hanzi-wrong": "再看看，这个不是哦！",
+    "idle-hanzi": "找一找刚才说的那个字！",
+    "task-trace-prefix": "跟我一起写",
+    "task-trace-suffix": "字！",
+    "trace-hint": "跟着灰色的笔画慢慢写哦！",
+    "trace-good": "写得真棒！",
+    "idle-trace": "用手指沿着字描一描！",
 }
-for i, zh in enumerate("一二三四五六七八九十", start=1):
+NUM_WORDS = ["一", "二", "三", "四", "五", "六", "七", "八", "九", "十",
+             "十一", "十二", "十三", "十四", "十五"]
+for i, zh in enumerate(NUM_WORDS, start=1):
     LINES[f"num-{i}"] = zh
+
+CHAR_WORDS = "一二三人大小上下口中山水火土木日月手车门"
+for i, ch in enumerate(CHAR_WORDS, start=1):
+    LINES[f"char-{i}"] = ch
 
 async def main():
     os.makedirs(OUT, exist_ok=True)
