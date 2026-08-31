@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#FFF3DD">
+<title>小小维修站</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="rotate-tip" hidden>
+  <svg viewBox="0 0 200 200" width="160" height="160" aria-hidden="true">
+    <rect x="55" y="30" width="90" height="140" rx="12" fill="none" stroke="#8A6D3B" stroke-width="6"/>
+    <path d="M30 100 A70 70 0 0 1 100 30" fill="none" stroke="#E8763A" stroke-width="8" stroke-linecap="round"/>
+    <path d="M100 30 l-16 -6 m16 6 l-6 16" stroke="#E8763A" stroke-width="8" stroke-linecap="round" fill="none"/>
+  </svg>
+  <p>把 iPad 横过来玩哦</p>
+</div>
+<div id="boot" class="boot">
+  <button id="bell" aria-label="按门铃开始">
+    <svg viewBox="0 0 120 120" width="180" height="180" aria-hidden="true">
+      <circle cx="60" cy="60" r="54" fill="#F5B324"/>
+      <circle cx="60" cy="60" r="44" fill="#FFD966"/>
+      <path d="M60 34 a16 16 0 0 1 16 16 v10 l6 8 h-44 l6 -8 v-10 a16 16 0 0 1 16 -16 z" fill="#8A5A1F"/>
+      <circle cx="60" cy="74" r="5" fill="#8A5A1F"/>
+    </svg>
+  </button>
+  <p class="boot-hint">按一下门铃，车库开张啦！</p>
+</div>
+<svg id="stage" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid meet" hidden></svg>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
