@@ -7,10 +7,12 @@ import {
   genTireTask, MAX_TIRE_LEVEL,
   genFuelTask, MAX_FUEL_LEVEL,
   genLightsTask, MAX_LIGHTS_LEVEL,
+  genMathTask, MAX_MATH_LEVEL,
 } from './taskgen.js';
 import { runTireGame } from './game-tires.js';
 import { runFuelGame } from './game-fuel.js';
 import { runLightsGame } from './game-lights.js';
+import { runMathGame } from './game-math.js';
 import { runWashGame } from './game-wash.js';
 import { attachIdleHelp, guideHand } from './guide.js';
 import { initParentPanel } from './parent.js';
@@ -38,6 +40,13 @@ const GAME_DEFS = {
     bubble: () => '帮我换上一样颜色的车灯吧！',
     voice: () => ['task-lights'],
   },
+  math: {
+    skill: 'math', max: MAX_MATH_LEVEL,
+    gen: (rng, lvl) => genMathTask(rng, lvl),
+    run: runMathGame,
+    bubble: t => `${t.a} ${t.op} ${t.b} = ?`,
+    voice: t => [`num-${t.a}`, t.op === '+' ? 'math-jia' : 'math-jian', `num-${t.b}`, 'math-dengyu-ji'],
+  },
   wash: {
     skill: null, max: 0,
     gen: () => null,
@@ -48,7 +57,7 @@ const GAME_DEFS = {
 };
 
 function pickGames(rng) {
-  const pool = ['tires', 'fuel', 'lights'];
+  const pool = ['tires', 'fuel', 'lights', 'math'];
   const first = rng.pick(pool);
   const second = rng.pick(pool.filter(g => g !== first));
   const list = [first, second];
