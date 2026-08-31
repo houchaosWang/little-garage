@@ -4,7 +4,7 @@
 
 ## 装到iPad上（一次性）
 
-1. iPad 的 Safari 打开：https://houchaoswang.github.io/little-garage/
+1. iPad 的 Safari 打开：https://little-garage-2-dplol652md9h.edgeone.dev/ （国内可稳定访问；备用地址 https://houchaoswang.github.io/little-garage/ ）
 2. 点分享按钮 → “添加到主屏幕” → 完成。桌面出现“维修站”图标，点开全屏运行，首次加载后无网也能玩。
 3. 建议开启 设置 → 辅助功能 → 引导式访问：孩子玩时三击侧边按钮锁定在本APP内，出不去也打不开别的软件。
 
