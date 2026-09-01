@@ -30,6 +30,7 @@ test('空存储返回默认档', () => {
     carConfig: { paint: 'purple', wheel: 'w1', placed: [] },
   });
   assert.equal(d.vipMeter, 0);
+  assert.equal(d.vipTarget, 0);
   assert.deepEqual(d.stats.byVehicle, {});
 });
 
@@ -124,4 +125,5 @@ test('旧档自动补全新技能字段且不动旧进度', () => {
   assert.deepEqual(d.reviewsToday, { date: '', count: 0 });
   assert.equal(d.collection.carConfig.paint, 'purple');
   assert.equal(d.vipMeter, 0);
+  assert.equal(d.vipTarget, 0);
 });

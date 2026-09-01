@@ -24,6 +24,7 @@ export function defaultSave() {
       carConfig: { paint: 'purple', wheel: 'w1', placed: [] },
     },
     vipMeter: 0,
+    vipTarget: 0,
     reviewsToday: { date: '', count: 0 },
   };
 }

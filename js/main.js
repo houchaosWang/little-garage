@@ -28,6 +28,7 @@ import { showHub } from './hub.js';
 import { rollDrop, applyDrop, showDrop } from './rewards.js';
 import { openMyCar } from './mycar.js';
 import { showBadge, openAlbum } from './album.js';
+import { addHelmet, showVipOffer } from './vip.js';
 
 const GAME_DEFS = {
   tires: {
@@ -189,13 +190,27 @@ async function nextJob() {
   const garage = createGarage(stage, rng);
   const friends = data.collection.friends;
   const friend = friends.length >= 2 && rng.next() < 0.3 ? rng.pick(friends) : null;
+  if (!data.vipTarget) data.vipTarget = rng.int(6, 10);
+  const isVip = !friend && data.vipMeter >= data.vipTarget;
   const customer = garage.newCustomer(friend);
+  if (isVip) addHelmet(customer);
   await garage.driveIn(customer.vehicle);
 
   const today = localDate();
   if (data.reviewsToday.date !== today) data.reviewsToday = { date: today, count: 0 };
+
+  let vipActive = false;
+  if (isVip) {
+    data.vipMeter = 0;
+    data.vipTarget = rng.int(6, 10);
+    vipActive = await showVipOffer(stage);
+    if (vipActive) sayNow('vip-accept-cheer');
+    else { sayNow('vip-decline-ok'); data.vipMeter = Math.max(0, data.vipTarget - 2); }
+    store.save(data);
+  }
+
   let review = null;
-  if (data.reviewsToday.count < 2) {
+  if (!vipActive && data.reviewsToday.count < 2) {
     review = dueReviews(data.skills, today)[0] || null;
   }
 
@@ -215,7 +230,7 @@ async function nextJob() {
     const def = GAME_DEFS[key];
     const isReview = !!review && i === 1;
     const skill = def.skill ? data.skills[def.skill] : null;
-    const lvl = isReview ? review.level : (skill ? effectiveLevel(skill, def.max) : 1);
+    const lvl = isReview ? review.level : (skill ? Math.min(effectiveLevel(skill, def.max) + (vipActive ? 1 : 0), def.max) : 1);
     const task = genUnique(def, key, lvl, customer, skill);
     const voices = def.voice(task).slice();
     if (i === 0) voices.unshift(customer.isFriend ? (rng.next() < 0.5 ? 'friend-back-1' : 'friend-back-2') : customer.vehicle.meta.intro);
@@ -242,6 +257,8 @@ async function nextJob() {
   addWheels(customer.vehicle);
   sfx.snap();
   store.recordJob(data);
+  data.vipMeter += 1;
+  store.save(data);
 
   const f = friends.find(x => x.type === customer.type && x.name === customer.name);
   if (f) { f.count += 1; f.color = customer.color; } else { friends.push({ type: customer.type, color: customer.color, name: customer.name, count: 1 }); }
@@ -253,13 +270,17 @@ async function nextJob() {
   }
 
   garage.clearBubble();
+  if (vipActive) await say('vip-done');
   sayNow(rng.pick(['praise-1', 'praise-2']));
   await garage.celebrate();
+  if (vipActive) await garage.celebrate();
   say('goodbye-1');
   await garage.driveOut(customer.vehicle);
 
-  const drop = rollDrop(rng, data.collection);
-  await showDrop(stage, drop, rng);
+  const drop = vipActive
+    ? { kind: 'sticker', id: (['v1', 'v2', 'v3', 'v4'].find(v => !data.collection.stickers.includes(v)) || rng.pick(['v1', 'v2', 'v3', 'v4'])) }
+    : rollDrop(rng, data.collection);
+  await showDrop(stage, drop, rng, vipActive ? 'vip-drop' : undefined);
   applyDrop(data.collection, drop);
   store.save(data);
   if (newBadge) { await showBadge(stage, newBadge); }

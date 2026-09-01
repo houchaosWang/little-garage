@@ -21,7 +21,7 @@ function itemMarkup(drop) {
   return { svg: wheel(0, 0, 30, drop.id), name: WHEEL_STYLES[drop.id].name, scale: 1.4 };
 }
 
-export function showDrop(stage, drop, rng) {
+export function showDrop(stage, drop, rng, voiceOverride) {
   return new Promise(resolve => {
     const g = document.createElementNS(SVG, 'g');
     g.setAttribute('class', 'drop-overlay');
@@ -42,9 +42,9 @@ export function showDrop(stage, drop, rng) {
     requestAnimationFrame(() => { dim.style.opacity = '0.55'; });
 
     sfx.cheer();
-    const voiceName = drop.kind === 'sticker'
+    const voiceName = voiceOverride || (drop.kind === 'sticker'
       ? (rng.next() < 0.5 ? 'sticker-get-1' : 'sticker-get-2')
-      : drop.kind === 'paint' ? 'paint-get' : 'wheel-get';
+      : drop.kind === 'paint' ? 'paint-get' : 'wheel-get');
     say(voiceName);
 
     setTimeout(() => {
