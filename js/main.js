@@ -102,14 +102,24 @@ const GAME_DEFS = {
 
 const SKILL_GAME = { counting: 'tires', numerals: 'fuel', colors: 'lights', math: 'math', literacy: 'hanzi', tracing: 'trace', shapes: 'shapes', compare: 'compare' };
 
+const SIG_SPACE = {
+  shapes: { 1: 3, 2: 4, 3: 5, 4: 35 },
+  compare: { 1: 4, 2: 6, 3: 6, 4: 16 },
+};
+function recentCap(key, lvl) {
+  const s = SIG_SPACE[key] && SIG_SPACE[key][lvl];
+  return s ? Math.min(6, Math.max(1, s - 1)) : 6;
+}
+
 function genUnique(def, key, lvl, customer, skill) {
   let task = def.gen(rng, lvl, customer);
   if (!skill || !taskSignature(key, task)) return task;
-  for (let i = 0; i < 5 && skill.recent.includes(taskSignature(key, task)); i++) {
+  const cap = recentCap(key, lvl);
+  for (let i = 0; i < 5 && skill.recent.slice(-cap).includes(taskSignature(key, task)); i++) {
     task = def.gen(rng, lvl, customer);
   }
   skill.recent.push(taskSignature(key, task));
-  if (skill.recent.length > 6) skill.recent.shift();
+  while (skill.recent.length > 6) skill.recent.shift();
   return task;
 }
 
@@ -137,8 +147,10 @@ initParentPanel(store, () => data, {
 });
 
 window.addEventListener('unhandledrejection', e => console.error('unhandled', e.reason));
+let jobRunning = false;
 function handleLoopError(err) {
   console.error('job loop failed', err);
+  jobRunning = false;
   try {
     const last = Number(sessionStorage.getItem('crash-ts') || 0);
     if (Date.now() - last > 60000) {
@@ -207,6 +219,7 @@ bell.addEventListener('pointerdown', async () => {
 }, { once: true });
 
 function goHub() {
+  if (jobRunning) return;
   if (store.jobsToday(data) >= data.settings.dailyJobs) {
     showSleeping();
     return;
@@ -219,6 +232,7 @@ function goHub() {
 }
 
 async function nextJob() {
+  jobRunning = true;
   const garage = createGarage(stage, rng);
   const friends = data.collection.friends;
   const friend = friends.length >= 2 && rng.next() < 0.3 ? rng.pick(friends) : null;
@@ -248,6 +262,7 @@ async function nextJob() {
 
   let pool = ['tires', 'fuel', 'lights', 'math', 'hanzi', 'trace', 'shapes', 'compare'];
   if (customer.vehicle.meta.lockColor === 'skip') pool = pool.filter(g => g !== 'lights');
+  if (review && !pool.includes(SKILL_GAME[review.skill])) review = null;
   let games;
   if (review) {
     const rGame = SKILL_GAME[review.skill];
@@ -278,7 +293,7 @@ async function nextJob() {
           data.reviewsToday.count += 1;
         } else {
           const before = effectiveLevel(skill, def.max);
-          const after = recordOutcome(skill, outcome, def.max);
+          const after = recordOutcome(skill, outcome, def.max, { allowDemote: !vipActive });
           skill.level = after.level;
           skill.streak = after.streak;
           if (Math.floor(after.level) > before) onPromoted(skill, before, today);
@@ -301,6 +316,7 @@ async function nextJob() {
     data.collection.badges.push(customer.type);
     newBadge = customer.type;
   }
+  store.save(data);
 
   garage.clearBubble();
   if (vipActive) await say('vip-done');
@@ -313,14 +329,16 @@ async function nextJob() {
   const drop = vipActive
     ? { kind: 'sticker', id: (['v1', 'v2', 'v3', 'v4'].find(v => !data.collection.stickers.includes(v)) || rng.pick(['v1', 'v2', 'v3', 'v4'])) }
     : rollDrop(rng, data.collection);
-  await showDrop(stage, drop, rng, vipActive ? 'vip-drop' : undefined);
   applyDrop(data.collection, drop);
   store.save(data);
+  await showDrop(stage, drop, rng, vipActive ? 'vip-drop' : undefined);
   if (newBadge) { await showBadge(stage, newBadge); }
 
   if (store.jobsToday(data) >= data.settings.dailyJobs) {
+    jobRunning = false;
     await showClosing();
   } else {
+    jobRunning = false;
     goHub();
   }
 }

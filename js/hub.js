@@ -46,11 +46,9 @@ export function showHub(stage, data, handlers) {
       setTimeout(() => { g.style.transition = ''; }, 200);
     }, 190);
   });
-  stage.querySelector('#hub-next').addEventListener('pointerdown', () => {
-    sayNow('hub-next');
-    sfx.ding();
-    handlers.onNext();
-  }, { once: true });
-  stage.querySelector('#hub-mycar').addEventListener('pointerdown', () => { sayNow('hub-mycar'); handlers.onGarage(); });
-  stage.querySelector('#hub-album').addEventListener('pointerdown', () => { sayNow('hub-album'); handlers.onAlbum(); });
+  let consumed = false;
+  const once = fn => () => { if (consumed) return; consumed = true; fn(); };
+  stage.querySelector('#hub-next').addEventListener('pointerdown', once(() => { sayNow('hub-next'); sfx.ding(); handlers.onNext(); }));
+  stage.querySelector('#hub-mycar').addEventListener('pointerdown', once(() => { sayNow('hub-mycar'); handlers.onGarage(); }));
+  stage.querySelector('#hub-album').addEventListener('pointerdown', once(() => { sayNow('hub-album'); handlers.onAlbum(); }));
 }

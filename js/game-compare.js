@@ -38,14 +38,16 @@ export function runCompareGame(garage, customer, task, attachIdleHelp) {
     if (isWing) {
       const gap = Math.min(230, 940 / n);
       const x0 = 600 - ((n - 1) * gap) / 2;
-      const baseY = 690;
+      const baseY = Math.max(690, 622 + 46 * Math.max(...task.sizes));
       task.sizes.forEach((s, i) => {
         const cx = x0 + i * gap;
+        const H = 46 * s, W = H * 2.3;
         const g = el('g', { class: 'cmp-item', transform: `translate(${cx} ${baseY})`, style: 'cursor:pointer' }, `
-          <rect class="hit" x="-70" y="-180" width="140" height="190" fill="transparent"/>
+          <rect class="hit" x="${(-W / 2 - 15).toFixed(1)}" y="${(-H - 20).toFixed(1)}" width="${(W + 30).toFixed(1)}" height="${(H + 40).toFixed(1)}" fill="transparent"/>
           <rect x="-16" y="-6" width="32" height="10" rx="3" fill="#D9CBAD"/>
           ${wingSvg(s, '#3E8EE0')}`);
         g.dataset.idx = i;
+        g.dataset.home = g.getAttribute('transform');
         layer.appendChild(g);
         items.push(g);
       });
@@ -56,9 +58,10 @@ export function runCompareGame(garage, customer, task, attachIdleHelp) {
         const cy = rowY0 + i * rowGap;
         const len = 90 * s;
         const g = el('g', { class: 'cmp-item', transform: `translate(250 ${cy})`, style: 'cursor:pointer' }, `
-          <rect class="hit" x="-10" y="-25" width="460" height="50" fill="transparent"/>
+          <rect class="hit" x="-10" y="-25" width="${(90 * s + 60).toFixed(1)}" height="50" fill="transparent"/>
           <rect x="0" y="-13" width="${len.toFixed(1)}" height="26" rx="13" fill="#66BB4C"/>`);
         g.dataset.idx = i;
+        g.dataset.home = g.getAttribute('transform');
         layer.appendChild(g);
         items.push(g);
       });
@@ -89,7 +92,7 @@ export function runCompareGame(garage, customer, task, attachIdleHelp) {
         errors += 1;
         sayNow('compare-wrong');
         sfx.pop();
-        const base = item.getAttribute('transform');
+        const base = item.dataset.home;
         let step = 0;
         const shake = () => {
           step += 1;

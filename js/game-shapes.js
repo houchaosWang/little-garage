@@ -142,7 +142,12 @@ export function runShapesGame(garage, customer, task, attachIdleHelp) {
       if (!drag || e.pointerId !== drag.id) return;
       const p = svgPoint(stage, e.clientX, e.clientY);
       const g = drag.g;
-      const near = holes.find(h => !h.dataset.filled && Math.hypot(p.x - h.dataset.cx, p.y - holeY) < hitR);
+      let near = null, nearD = Infinity;
+      for (const h of holes) {
+        if (h.dataset.filled) continue;
+        const d = Math.hypot(p.x - h.dataset.cx, p.y - holeY);
+        if (d < hitR && d < nearD) { near = h; nearD = d; }
+      }
       if (near && near.dataset.shape === g.dataset.shape) {
         near.dataset.filled = '1';
         g.dataset.placed = '1';

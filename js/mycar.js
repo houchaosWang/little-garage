@@ -89,6 +89,7 @@ export function openMyCar(data, store, onClose) {
         <circle r="24" fill="${PALETTE[name]}" stroke="${selected ? '#8A5A1F' : '#D9CBAD'}" stroke-width="${selected ? 5 : 3}"/>
         ${selected ? '<circle r="24" fill="none" stroke="#FFFFFF" stroke-width="1.5"/>' : ''}`;
       g.addEventListener('pointerdown', e => {
+        if (drag) return;
         e.stopPropagation();
         if (cc.paint === name) return;
         cc.paint = name;
@@ -114,6 +115,7 @@ export function openMyCar(data, store, onClose) {
         ${wheel(cx, cy, 26, style)}
         <text x="${cx}" y="${cy + 50}" text-anchor="middle" font-size="15" fill="#8A5A1F">${WHEEL_STYLES[style].name}</text>`;
       g.addEventListener('pointerdown', e => {
+        if (drag) return;
         e.stopPropagation();
         if (cc.wheel === style) return;
         cc.wheel = style;
@@ -132,7 +134,8 @@ export function openMyCar(data, store, onClose) {
     owned.forEach((id, i) => {
       const item = STICKERS[id];
       if (!item) return;
-      const cx = 60 + i * 46, cy = 382;
+      const row = Math.floor(i / 12), c = i % 12;
+      const cx = 60 + c * 56, cy = 362 + row * 38;
       const g = document.createElementNS(SVG, 'g');
       g.setAttribute('class', 'tray-sticker');
       g.setAttribute('data-id', id);

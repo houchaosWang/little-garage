@@ -63,3 +63,19 @@ test('半级状态升级取整+1（2.5升到3）', () => {
   s = recordOutcome(s, clean, MAX);
   assert.equal(s.level, 3);
 });
+
+test('VIP挑战 allowDemote:false 时，出错/求助不降级但仍清空连击', () => {
+  let s = createSkill(2);
+  s = recordOutcome(s, clean, MAX, { allowDemote: false });
+  assert.equal(s.level, 2);
+  assert.equal(s.streak, 1);
+  s = recordOutcome(s, bad, MAX, { allowDemote: false });
+  assert.equal(s.level, 2);
+  assert.equal(s.streak, 0);
+  s = recordOutcome(s, helped, MAX, { allowDemote: false });
+  assert.equal(s.level, 2);
+  assert.equal(s.streak, 0);
+  // 不传 options 时默认行为不变（allowDemote 默认true）
+  s = recordOutcome(s, bad, MAX);
+  assert.equal(s.level, 1.5);
+});

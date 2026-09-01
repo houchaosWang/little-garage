@@ -36,10 +36,15 @@ export function showBadge(stage, type) {
     sfx.cheer();
     say('badge-get');
 
-    g.querySelector('.badge-accept').addEventListener('pointerdown', () => {
+    const acceptBtn = g.querySelector('.badge-accept');
+    const shownAt = performance.now();
+    let done = false;
+    acceptBtn.addEventListener('pointerdown', () => {
+      if (done || performance.now() - shownAt < 300) return;
+      done = true;
       g.remove();
       resolve();
-    }, { once: true });
+    });
   });
 }
 

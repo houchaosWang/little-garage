@@ -61,10 +61,15 @@ export function showDrop(stage, drop, rng, voiceOverride) {
           <text x="0" y="11" text-anchor="middle" font-size="32" fill="#6B4A12">收下！</text>
         </g>`;
       sfx.pop();
-      open.querySelector('.drop-accept').addEventListener('pointerdown', () => {
+      const acceptBtn = open.querySelector('.drop-accept');
+      const shownAt = performance.now();
+      let done = false;
+      acceptBtn.addEventListener('pointerdown', () => {
+        if (done || performance.now() - shownAt < 300) return;
+        done = true;
         g.remove();
         resolve();
-      }, { once: true });
+      });
     }, 600);
   });
 }
