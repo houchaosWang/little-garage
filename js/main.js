@@ -157,11 +157,18 @@ window.addEventListener('resize', checkOrientation);
 checkOrientation();
 
 const bootHint = document.getElementById('boot-hint');
-const CORE_CLIPS = ['welcome', 'intro-race', 'intro-dump',
+const CORE_CLIPS = ['welcome',
+  'intro-race', 'intro-dump', 'intro-police', 'intro-ambulance', 'intro-fire', 'intro-digger', 'intro-mixer', 'intro-loader',
+  'buddy-hello-1', 'buddy-hello-2',
+  'hub-next', 'hub-mycar', 'hub-album',
   'task-tires-prefix', 'task-tires-suffix', 'task-fuel-prefix', 'task-fuel-suffix',
-  'task-lights', 'task-shapes', 'task-wash', 'math-jia', 'math-jian', 'math-dengyu-ji',
+  'task-lights', 'task-wash', 'task-shapes',
+  'task-compare-big', 'task-compare-small', 'task-compare-long', 'task-compare-short',
   'task-hanzi-prefix', 'task-hanzi-suffix', 'task-trace-prefix', 'task-trace-suffix',
-  'num-1', 'num-2', 'num-3', 'num-4', 'num-5'];
+  'math-jia', 'math-jian', 'math-dengyu-ji',
+  'num-1', 'num-2', 'num-3', 'num-4', 'num-5',
+  'friend-back-1', 'friend-back-2',
+  'vip-ask'];
 const REST_CLIPS = [
   ...Array.from({ length: 15 }, (_, i) => `num-${i + 6}`),
   ...Array.from({ length: 40 }, (_, i) => `char-${i + 1}`),
@@ -170,8 +177,11 @@ const REST_CLIPS = [
   'lights-wrong', 'idle-lights', 'idle-wash',
   'task-math', 'math-dengyu', 'math-yiqi', 'math-wrong', 'math-duila', 'math-zailai', 'math-nazou', 'idle-math',
   'hanzi-wrong', 'idle-hanzi', 'trace-hint', 'trace-good', 'idle-trace',
-  'idle-shapes', 'shapes-wrong',
-  'task-compare-big', 'task-compare-small', 'task-compare-long', 'task-compare-short', 'idle-compare', 'compare-wrong',
+  'idle-shapes', 'shapes-wrong', 'idle-compare', 'compare-wrong',
+  'paint-fun', 'wheel-cool', 'sticker-stick', 'garage-mine',
+  'sticker-get-1', 'sticker-get-2', 'paint-get', 'wheel-get',
+  'badge-get', 'album-open',
+  'vip-accept-cheer', 'vip-decline-ok', 'vip-done', 'vip-drop',
 ];
 preload(CORE_CLIPS, (done, total) => {
   bootHint.textContent = `正在准备声音 ${done}/${total}`;

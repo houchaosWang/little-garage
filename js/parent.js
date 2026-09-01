@@ -7,7 +7,7 @@ export const STATE_INFO = {
   solid: ['已巩固', '#DFF3C8', '#3B6D11'],
   relearning: ['回炉中', '#F9D9D2', '#A32D2D'],
 };
-export const GAME_NAMES = { tires: '装轮胎', fuel: '加油', lights: '换车灯', wash: '洗车', math: '石头算数', hanzi: '认字搬箱', trace: '描字' };
+export const GAME_NAMES = { tires: '装轮胎', fuel: '加油', lights: '换车灯', wash: '洗车', math: '石头算数', hanzi: '认字搬箱', trace: '描字', shapes: '形状对孔', compare: '比大小' };
 
 export function levelState(skill, n) {
   const m = skill.mastery && skill.mastery[String(n)];
