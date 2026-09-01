@@ -103,6 +103,36 @@ export function genMathTask(rng, level) {
   return { type: 'math', op, a, b, answer, options: rng.shuffle(options) };
 }
 
+export const SHAPE_SET = ['circle', 'square', 'triangle', 'star', 'ellipse', 'diamond', 'trapezoid'];
+export const SHAPES_LEVELS = { 1: { k: 2, pool: 3 }, 2: { k: 3, pool: 4 }, 3: { k: 4, pool: 5 }, 4: { k: 4, pool: 7 } };
+export const MAX_SHAPES_LEVEL = 4;
+
+export function genShapesTask(rng, level) {
+  const l = Math.max(1, Math.min(Math.floor(level), MAX_SHAPES_LEVEL));
+  const { k, pool } = SHAPES_LEVELS[l];
+  const shapes = rng.shuffle(SHAPE_SET.slice(0, pool)).slice(0, k);
+  return { type: 'shapes', shapes, tray: rng.shuffle(shapes) };
+}
+
+export const COMPARE_LEVELS = {
+  1: { n: 2, ratio: 2.2, kinds: ['big', 'small'] },
+  2: { n: 3, ratio: 1.7, kinds: ['big', 'small'] },
+  3: { n: 3, ratio: 1.5, kinds: ['long', 'short'] },
+  4: { n: 4, ratio: 1.25, kinds: ['big', 'small', 'long', 'short'] },
+};
+export const MAX_COMPARE_LEVEL = 4;
+
+export function genCompareTask(rng, level) {
+  const l = Math.max(1, Math.min(Math.floor(level), MAX_COMPARE_LEVEL));
+  const { n, ratio, kinds } = COMPARE_LEVELS[l];
+  const kind = rng.pick(kinds);
+  const sizes = rng.shuffle(Array.from({ length: n }, (_, i) => Math.pow(ratio, i)));
+  const answerIdx = (kind === 'big' || kind === 'long')
+    ? sizes.indexOf(Math.max(...sizes))
+    : sizes.indexOf(Math.min(...sizes));
+  return { type: 'compare', kind, n, sizes, answerIdx };
+}
+
 export function taskSignature(key, task) {
   switch (key) {
     case 'tires': return `c${task.count}`;
@@ -111,6 +141,8 @@ export function taskSignature(key, task) {
     case 'math': return `${task.a}${task.op}${task.b}`;
     case 'hanzi': return `h${task.answerIndex}`;
     case 'trace': return `w${task.charIndex}`;
+    case 'shapes': return 's' + [...task.shapes].sort().join('.');
+    case 'compare': return task.kind + task.n + '-' + task.answerIdx;
     default: return '';
   }
 }

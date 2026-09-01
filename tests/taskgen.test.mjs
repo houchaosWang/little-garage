@@ -8,6 +8,8 @@ import {
   genMathTask, MAX_MATH_LEVEL,
   genHanziTask, CHARSET, HANZI_POOLS, MAX_HANZI_LEVEL,
   genTraceTask, TRACE_POOLS, MAX_TRACE_LEVEL,
+  genShapesTask, SHAPE_SET, SHAPES_LEVELS, MAX_SHAPES_LEVEL,
+  genCompareTask, COMPARE_LEVELS, MAX_COMPARE_LEVEL,
   taskSignature,
 } from '../js/taskgen.js';
 
@@ -129,4 +131,55 @@ test('taskSignature 各游戏指纹', () => {
   assert.equal(taskSignature('fuel', { target: 9 }), 'f9');
   assert.equal(taskSignature('lights', { answer: 'red' }), '');
   assert.equal(taskSignature('wash', {}), '');
+});
+
+test('genShapesTask 各级别孔数/候选池符合配置，形状不重复，托盘是形状的全排列，越界与小数级别被夹回', () => {
+  for (let level = 1; level <= MAX_SHAPES_LEVEL; level++) {
+    const { k, pool } = SHAPES_LEVELS[level];
+    for (let seed = 0; seed < 40; seed++) {
+      const t = genShapesTask(makeRng(seed), level);
+      assert.equal(t.type, 'shapes');
+      assert.equal(t.shapes.length, k);
+      assert.equal(new Set(t.shapes).size, k);
+      assert.ok(t.shapes.every(s => SHAPE_SET.slice(0, pool).includes(s)));
+      assert.equal(t.tray.length, k);
+      assert.deepEqual([...t.tray].sort(), [...t.shapes].sort());
+    }
+  }
+  const lo = genShapesTask(makeRng(1), 0);
+  assert.equal(lo.shapes.length, SHAPES_LEVELS[1].k);
+  const frac = genShapesTask(makeRng(1), 2.9);
+  assert.equal(frac.shapes.length, SHAPES_LEVELS[2].k);
+  const hi = genShapesTask(makeRng(1), 99);
+  assert.equal(hi.shapes.length, SHAPES_LEVELS[MAX_SHAPES_LEVEL].k);
+});
+
+test('genCompareTask 各级别数量与种类符合配置，尺寸不重复，答案确为最大/最小/最长/最短，越界与小数级别被夹回', () => {
+  for (let level = 1; level <= MAX_COMPARE_LEVEL; level++) {
+    const { n, kinds } = COMPARE_LEVELS[level];
+    for (let seed = 0; seed < 60; seed++) {
+      const t = genCompareTask(makeRng(seed), level);
+      assert.equal(t.type, 'compare');
+      assert.equal(t.n, n);
+      assert.ok(kinds.includes(t.kind));
+      assert.equal(t.sizes.length, n);
+      assert.equal(new Set(t.sizes).size, n);
+      const want = (t.kind === 'big' || t.kind === 'long') ? Math.max(...t.sizes) : Math.min(...t.sizes);
+      assert.equal(t.sizes[t.answerIdx], want);
+    }
+  }
+  const frac = genCompareTask(makeRng(1), 2.9);
+  assert.equal(frac.n, COMPARE_LEVELS[2].n);
+  const hi = genCompareTask(makeRng(1), 99);
+  assert.equal(hi.n, COMPARE_LEVELS[MAX_COMPARE_LEVEL].n);
+});
+
+test('taskSignature 形状与比较指纹（形状指纹与顺序无关）', () => {
+  assert.equal(taskSignature('shapes', { shapes: ['star', 'circle'] }), 's' + ['circle', 'star'].join('.'));
+  assert.equal(
+    taskSignature('shapes', { shapes: ['circle', 'star'] }),
+    taskSignature('shapes', { shapes: ['star', 'circle'] }),
+  );
+  assert.equal(taskSignature('compare', { kind: 'big', n: 3, answerIdx: 1 }), 'big3-1');
+  assert.equal(taskSignature('compare', { kind: 'short', n: 4, answerIdx: 0 }), 'short4-0');
 });

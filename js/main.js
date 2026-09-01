@@ -11,6 +11,8 @@ import {
   genMathTask, MAX_MATH_LEVEL,
   genHanziTask, MAX_HANZI_LEVEL,
   genTraceTask, MAX_TRACE_LEVEL,
+  genShapesTask, MAX_SHAPES_LEVEL,
+  genCompareTask, MAX_COMPARE_LEVEL,
   CHARSET,
   taskSignature,
 } from './taskgen.js';
@@ -21,6 +23,8 @@ import { runMathGame } from './game-math.js';
 import { runWashGame } from './game-wash.js';
 import { runHanziGame } from './game-hanzi.js';
 import { runTraceGame } from './game-trace.js';
+import { runShapesGame } from './game-shapes.js';
+import { runCompareGame } from './game-compare.js';
 import { attachIdleHelp, guideHand } from './guide.js';
 import { initParentPanel } from './parent.js';
 import { PALETTE, addWheels } from './vehicles.js';
@@ -80,9 +84,23 @@ const GAME_DEFS = {
     bubble: t => `写一写「${CHARSET[t.charIndex]}」`,
     voice: t => ['task-trace-prefix', `char-${t.charIndex + 1}`, 'task-trace-suffix'],
   },
+  shapes: {
+    skill: 'shapes', max: MAX_SHAPES_LEVEL,
+    gen: (rng, lvl) => genShapesTask(rng, lvl),
+    run: runShapesGame,
+    bubble: () => '把零件装进一样形状的孔里！',
+    voice: () => ['task-shapes'],
+  },
+  compare: {
+    skill: 'compare', max: MAX_COMPARE_LEVEL,
+    gen: (rng, lvl) => genCompareTask(rng, lvl),
+    run: runCompareGame,
+    bubble: t => ({ big: '帮我换上最大的那个！', small: '帮我选最小的那个！', long: '帮我接上最长的管子！', short: '帮我拿最短的管子！' })[t.kind],
+    voice: t => [`task-compare-${t.kind}`],
+  },
 };
 
-const SKILL_GAME = { counting: 'tires', numerals: 'fuel', colors: 'lights', math: 'math', literacy: 'hanzi', tracing: 'trace' };
+const SKILL_GAME = { counting: 'tires', numerals: 'fuel', colors: 'lights', math: 'math', literacy: 'hanzi', tracing: 'trace', shapes: 'shapes', compare: 'compare' };
 
 function genUnique(def, key, lvl, customer, skill) {
   let task = def.gen(rng, lvl, customer);
@@ -114,6 +132,8 @@ initParentPanel(store, () => data, {
   math: { name: '算数·石头题', max: MAX_MATH_LEVEL },
   literacy: { name: '认字·搬箱', max: MAX_HANZI_LEVEL },
   tracing: { name: '写字·描红', max: MAX_TRACE_LEVEL },
+  shapes: { name: '图形·对孔', max: MAX_SHAPES_LEVEL },
+  compare: { name: '比较·大小', max: MAX_COMPARE_LEVEL },
 });
 
 window.addEventListener('unhandledrejection', e => console.error('unhandled', e.reason));
@@ -139,7 +159,7 @@ checkOrientation();
 const bootHint = document.getElementById('boot-hint');
 const CORE_CLIPS = ['welcome', 'intro-race', 'intro-dump',
   'task-tires-prefix', 'task-tires-suffix', 'task-fuel-prefix', 'task-fuel-suffix',
-  'task-lights', 'task-wash', 'math-jia', 'math-jian', 'math-dengyu-ji',
+  'task-lights', 'task-shapes', 'task-wash', 'math-jia', 'math-jian', 'math-dengyu-ji',
   'task-hanzi-prefix', 'task-hanzi-suffix', 'task-trace-prefix', 'task-trace-suffix',
   'num-1', 'num-2', 'num-3', 'num-4', 'num-5'];
 const REST_CLIPS = [
@@ -150,6 +170,8 @@ const REST_CLIPS = [
   'lights-wrong', 'idle-lights', 'idle-wash',
   'task-math', 'math-dengyu', 'math-yiqi', 'math-wrong', 'math-duila', 'math-zailai', 'math-nazou', 'idle-math',
   'hanzi-wrong', 'idle-hanzi', 'trace-hint', 'trace-good', 'idle-trace',
+  'idle-shapes', 'shapes-wrong',
+  'task-compare-big', 'task-compare-small', 'task-compare-long', 'task-compare-short', 'idle-compare', 'compare-wrong',
 ];
 preload(CORE_CLIPS, (done, total) => {
   bootHint.textContent = `正在准备声音 ${done}/${total}`;
@@ -214,7 +236,8 @@ async function nextJob() {
     review = dueReviews(data.skills, today)[0] || null;
   }
 
-  const pool = ['tires', 'fuel', 'lights', 'math', 'hanzi', 'trace'];
+  let pool = ['tires', 'fuel', 'lights', 'math', 'hanzi', 'trace', 'shapes', 'compare'];
+  if (customer.vehicle.meta.lockColor === 'skip') pool = pool.filter(g => g !== 'lights');
   let games;
   if (review) {
     const rGame = SKILL_GAME[review.skill];
