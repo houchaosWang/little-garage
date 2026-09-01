@@ -103,6 +103,11 @@ export const STICKERS = {
 
 export const WHEEL_STYLES = { w1: { name: '经典' }, w2: { name: '星星金轮' }, w3: { name: '烈焰红轮' } };
 
+export const BADGE_CHAR = {
+  race: '赛', dump: '翻', police: '警', ambulance: '救',
+  fire: '消', digger: '挖', mixer: '搅', loader: '铲',
+};
+
 const REGULAR_IDS = Array.from({ length: 20 }, (_, i) => `s${i + 1}`);
 
 export function rollDrop(rng, collection) {

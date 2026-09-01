@@ -27,6 +27,7 @@ import { PALETTE, addWheels } from './vehicles.js';
 import { showHub } from './hub.js';
 import { rollDrop, applyDrop, showDrop } from './rewards.js';
 import { openMyCar } from './mycar.js';
+import { showBadge, openAlbum } from './album.js';
 
 const GAME_DEFS = {
   tires: {
@@ -180,21 +181,15 @@ function goHub() {
   showHub(stage, data, {
     onNext: () => { nextJob().catch(handleLoopError); },
     onGarage: () => openMyCar(data, store, () => goHub()),
-    onAlbum: () => openStubPage('相册整理中……'),
+    onAlbum: () => openAlbum(data, () => goHub()),
   });
-}
-
-function openStubPage(text) {
-  const wrap = document.createElement('div');
-  wrap.className = 'page-overlay';
-  wrap.innerHTML = `<div class="page-card"><p class="page-title">${text}</p><button type="button" class="pp-wide" id="page-back">返回</button></div>`;
-  document.body.appendChild(wrap);
-  wrap.querySelector('#page-back').addEventListener('pointerdown', () => wrap.remove());
 }
 
 async function nextJob() {
   const garage = createGarage(stage, rng);
-  const customer = garage.newCustomer();
+  const friends = data.collection.friends;
+  const friend = friends.length >= 2 && rng.next() < 0.3 ? rng.pick(friends) : null;
+  const customer = garage.newCustomer(friend);
   await garage.driveIn(customer.vehicle);
 
   const today = localDate();
@@ -223,7 +218,7 @@ async function nextJob() {
     const lvl = isReview ? review.level : (skill ? effectiveLevel(skill, def.max) : 1);
     const task = genUnique(def, key, lvl, customer, skill);
     const voices = def.voice(task).slice();
-    if (i === 0) voices.unshift(customer.vehicle.meta.intro);
+    if (i === 0) voices.unshift(customer.isFriend ? (rng.next() < 0.5 ? 'friend-back-1' : 'friend-back-2') : customer.vehicle.meta.intro);
     garage.showBubble(def.bubble(task), voices);
     window.__firstTirePlay = key === 'tires' && !data.stats.byGame.tires;
     const outcome = await def.run(garage, customer, task, attachIdleHelp);
@@ -248,6 +243,15 @@ async function nextJob() {
   sfx.snap();
   store.recordJob(data);
 
+  const f = friends.find(x => x.type === customer.type && x.name === customer.name);
+  if (f) { f.count += 1; f.color = customer.color; } else { friends.push({ type: customer.type, color: customer.color, name: customer.name, count: 1 }); }
+  data.stats.byVehicle[customer.type] = (data.stats.byVehicle[customer.type] || 0) + 1;
+  let newBadge = null;
+  if (data.stats.byVehicle[customer.type] === 3 && !data.collection.badges.includes(customer.type)) {
+    data.collection.badges.push(customer.type);
+    newBadge = customer.type;
+  }
+
   garage.clearBubble();
   sayNow(rng.pick(['praise-1', 'praise-2']));
   await garage.celebrate();
@@ -258,6 +262,7 @@ async function nextJob() {
   await showDrop(stage, drop, rng);
   applyDrop(data.collection, drop);
   store.save(data);
+  if (newBadge) { await showBadge(stage, newBadge); }
 
   if (store.jobsToday(data) >= data.settings.dailyJobs) {
     await showClosing();

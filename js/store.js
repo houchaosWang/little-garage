@@ -13,7 +13,7 @@ export function defaultSave() {
       counting: skill(), numerals: skill(), colors: skill(),
       math: skill(), literacy: skill(), tracing: skill(),
     },
-    stats: { daily: {}, byGame: {} },
+    stats: { daily: {}, byGame: {}, byVehicle: {} },
     settings: { dailyJobs: 4 },
     collection: {
       stickers: [],

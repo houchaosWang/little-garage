@@ -30,6 +30,7 @@ test('空存储返回默认档', () => {
     carConfig: { paint: 'purple', wheel: 'w1', placed: [] },
   });
   assert.equal(d.vipMeter, 0);
+  assert.deepEqual(d.stats.byVehicle, {});
 });
 
 test('损坏JSON回默认档不抛错', () => {
@@ -83,7 +84,7 @@ test('残缺存档load时用默认值补全缺失字段', () => {
   assert.equal(d.skills.counting.level, 1);
   assert.equal(d.skills.counting.streak, 0);
   assert.equal(d.settings.dailyJobs, 4);
-  assert.deepEqual(d.stats, { daily: {}, byGame: {} });
+  assert.deepEqual(d.stats, { daily: {}, byGame: {}, byVehicle: {} });
 });
 
 test('reopenToday 清除当日计数并立即生效', () => {

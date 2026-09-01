@@ -96,13 +96,18 @@ export function createGarage(stage, rng) {
     return new Promise(res => setTimeout(res, 1400));
   }
 
-  function newCustomer() {
+  function newCustomer(friend) {
+    if (friend) {
+      const { type, color, name } = friend;
+      const vehicle = buildVehicle(type, color, { missingWheels: true });
+      return { type, color, name, vehicle, isFriend: true };
+    }
     const type = rng.pick(VEHICLE_TYPES);
     const lock = vehicleLockColor(type);
     const color = lock && lock !== 'skip' ? lock : rng.pick(Object.keys(PALETTE));
     const name = rng.pick(NAMES);
     const vehicle = buildVehicle(type, color, { missingWheels: true });
-    return { type, color, name, vehicle };
+    return { type, color, name, vehicle, isFriend: false };
   }
 
   return { layers, showBubble, clearBubble, driveIn, driveOut, celebrate, newCustomer };

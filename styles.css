@@ -52,3 +52,14 @@ html, body { height: 100%; overflow: hidden; background: #FFF3DD; font-family: -
 .page-wide #mycar-svg { width: min(760px, 84vw); height: auto; touch-action: none; }
 .page-wide .pp-wide { width: min(760px, 84vw); }
 .drag-ghost { filter: drop-shadow(0 4px 6px rgba(0,0,0,0.25)); }
+
+.album-body { width: min(760px, 84vw); max-height: 64vh; overflow-y: auto; padding-right: 6px; }
+.album-sec { margin-bottom: 20px; }
+.album-sec-title { font-size: 19px; color: #8A5A1F; border-top: 2px solid #EDD9AC; padding-top: 12px; margin: 0 0 12px; }
+.album-sec:first-child .album-sec-title { border-top: none; padding-top: 0; }
+.album-friends-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; }
+.album-friend-card { background: #FFF8EA; border: 3px solid #E8C97F; border-radius: 16px; padding: 6px 4px 2px; }
+.album-friend-svg { width: 100%; height: auto; display: block; }
+.album-empty { grid-column: 1 / -1; font-size: 17px; color: #A0763A; text-align: center; padding: 22px 0; }
+.album-badges-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; justify-items: center; }
+.album-badge-slot svg { display: block; }
