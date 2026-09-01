@@ -1,4 +1,5 @@
 import { buildVehicle } from './vehicles.js';
+import { renderPlaced } from './mycar.js';
 import { say, sayNow, sfx } from './audio.js';
 import { makeRng } from './rng.js';
 
@@ -27,9 +28,12 @@ export function showHub(stage, data, handlers) {
       ${btn('hub-album', 940, '<rect x="-26" y="-32" width="52" height="64" rx="6" fill="#B4701E"/><rect x="-18" y="-24" width="36" height="48" rx="4" fill="#FDF3F1"/><line x1="-10" y1="-10" x2="10" y2="-10" stroke="#B4701E" stroke-width="4"/><line x1="-10" y1="4" x2="10" y2="4" stroke="#B4701E" stroke-width="4"/>', '朋友相册')}
     </g>`;
 
-  const buddy = buildVehicle('race', data.collection.carConfig.paint);
+  const buddy = buildVehicle('race', data.collection.carConfig.paint, { wheelStyle: data.collection.carConfig.wheel });
   buddy.el.setAttribute('transform', 'translate(150 560) scale(0.85)');
   stage.querySelector('#hub-buddy').appendChild(buddy.el);
+  // placed 里存的是车身局部坐标（见 mycar.js 顶部注释），renderPlaced 直接把贴纸挂到
+  // buddy.el 下面即可正确落位，不需要因为这里的车比我的车库里小(0.85x vs 1.25x)而做换算。
+  renderPlaced(buddy.el, data.collection.carConfig.placed, 0.9);
   say(rng.pick(['buddy-hello-1', 'buddy-hello-2']));
 
   stage.querySelector('#hub-buddy').addEventListener('pointerdown', () => {

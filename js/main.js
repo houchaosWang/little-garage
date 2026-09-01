@@ -25,6 +25,8 @@ import { attachIdleHelp, guideHand } from './guide.js';
 import { initParentPanel } from './parent.js';
 import { PALETTE, addWheels } from './vehicles.js';
 import { showHub } from './hub.js';
+import { rollDrop, applyDrop, showDrop } from './rewards.js';
+import { openMyCar } from './mycar.js';
 
 const GAME_DEFS = {
   tires: {
@@ -177,7 +179,7 @@ function goHub() {
   }
   showHub(stage, data, {
     onNext: () => { nextJob().catch(handleLoopError); },
-    onGarage: () => openStubPage('我的车库装修中……'),
+    onGarage: () => openMyCar(data, store, () => goHub()),
     onAlbum: () => openStubPage('相册整理中……'),
   });
 }
@@ -251,6 +253,11 @@ async function nextJob() {
   await garage.celebrate();
   say('goodbye-1');
   await garage.driveOut(customer.vehicle);
+
+  const drop = rollDrop(rng, data.collection);
+  await showDrop(stage, drop, rng);
+  applyDrop(data.collection, drop);
+  store.save(data);
 
   if (store.jobsToday(data) >= data.settings.dailyJobs) {
     await showClosing();

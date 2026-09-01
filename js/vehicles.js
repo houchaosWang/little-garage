@@ -13,11 +13,37 @@ const eyes = (x1, x2, y) => `
   </g>
   <path class="v-mouth" d="M${x1 + 14} ${y + 26} Q${(x1 + x2) / 2 + 3} ${y + 34} ${x2 - 8} ${y + 26}" stroke="#2C2C2A" stroke-width="4" fill="none" stroke-linecap="round"/>`;
 
-const wheel = (cx, cy, r = 30) => `
+const goldStar = (cx, cy, r) => {
+  const pts = [];
+  for (let i = 0; i < 10; i++) {
+    const rr = i % 2 === 0 ? r : r * 0.42;
+    const a = -Math.PI / 2 + (i * Math.PI) / 5;
+    pts.push(`${(cx + rr * Math.cos(a)).toFixed(1)},${(cy + rr * Math.sin(a)).toFixed(1)}`);
+  }
+  return `<polygon points="${pts.join(' ')}" fill="#F5B324"/>`;
+};
+
+export function wheel(cx, cy, r = 30, style = 'w1') {
+  let hub;
+  if (style === 'w2') {
+    hub = goldStar(cx, cy, r * 0.46);
+  } else if (style === 'w3') {
+    const s = r * 0.3;
+    hub = `
+    <circle cx="${cx}" cy="${cy}" r="${r * 0.4}" fill="#E8493F"/>
+    <line x1="${cx - s}" y1="${cy}" x2="${cx + s}" y2="${cy}" stroke="#FFFFFF" stroke-width="3"/>
+    <line x1="${cx}" y1="${cy - s}" x2="${cx}" y2="${cy + s}" stroke="#FFFFFF" stroke-width="3"/>
+    <line x1="${cx - s * 0.7}" y1="${cy - s * 0.7}" x2="${cx + s * 0.7}" y2="${cy + s * 0.7}" stroke="#FFFFFF" stroke-width="3"/>
+    <line x1="${cx - s * 0.7}" y1="${cy + s * 0.7}" x2="${cx + s * 0.7}" y2="${cy - s * 0.7}" stroke="#FFFFFF" stroke-width="3"/>`;
+  } else {
+    hub = `<circle cx="${cx}" cy="${cy}" r="${r * 0.4}" fill="#B9B6AD"/>`;
+  }
+  return `
   <g class="v-wheel">
     <circle cx="${cx}" cy="${cy}" r="${r}" fill="#3A3A38"/>
-    <circle cx="${cx}" cy="${cy}" r="${r * 0.4}" fill="#B9B6AD"/>
+    ${hub}
   </g>`;
+}
 
 // 每种车型：body(color)返回SVG内串；slots为需要装轮胎的锚点（舞台内相对本车原点）
 const TYPES = {
@@ -143,17 +169,17 @@ export function vehicleLockColor(type) {
   return TYPES[type].lockColor || null;
 }
 
-export function buildVehicle(type, colorName, { missingWheels = false } = {}) {
+export function buildVehicle(type, colorName, { missingWheels = false, wheelStyle = 'w1' } = {}) {
   const t = TYPES[type];
   const c = t.color || PALETTE[colorName];
   const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
   g.setAttribute('class', 'vehicle');
-  const wheels = missingWheels ? '' : t.slots.map(s => wheel(s.x, s.y)).join('');
+  const wheels = missingWheels ? '' : t.slots.map(s => wheel(s.x, s.y, 30, wheelStyle)).join('');
   g.innerHTML = t.body(c) + wheels;
   return { el: g, meta: t, slots: t.slots.map(s => ({ ...s })) };
 }
 
-export function addWheels(vehicle) {
+export function addWheels(vehicle, style = 'w1') {
   if (vehicle.el.querySelector('.v-wheel')) return;
-  vehicle.el.innerHTML += vehicle.slots.map(s => wheel(s.x, s.y)).join('');
+  vehicle.el.innerHTML += vehicle.slots.map(s => wheel(s.x, s.y, 30, style)).join('');
 }
