@@ -63,6 +63,9 @@ export function initParentPanel(store, getData, skillMeta, { sync } = {}) {
 
   const cancel = () => { if (timer) { clearTimeout(timer); timer = null; } };
   document.addEventListener('pointerdown', e => {
+    // 主指针按下 = 一次全新的触摸开始，之前的手指必然都已离开；
+    // 顺手清掉没收到 pointerup 的残留（iOS 切后台等），否则两指永远凑不成"恰好2个"，面板再也打不开
+    if (e.isPrimary) pointers.clear();
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (pointers.size === 2 && !timer && !document.getElementById('parent-panel')) {
       timer = setTimeout(openPanel, 1800);
