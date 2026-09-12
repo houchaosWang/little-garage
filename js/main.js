@@ -14,6 +14,12 @@ import {
   genTraceTask, MAX_TRACE_LEVEL,
   genShapesTask, MAX_SHAPES_LEVEL,
   genCompareTask, MAX_COMPARE_LEVEL,
+  genSubitizeTask, MAX_SUBITIZE_LEVEL,
+  genPatternTask, MAX_PATTERN_LEVEL,
+  genNumlineTask, MAX_NUMLINE_LEVEL,
+  genStoryTask, MAX_STORY_LEVEL,
+  genSortTask, MAX_SORT_LEVEL,
+  genSpatialTask, MAX_SPATIAL_LEVEL,
   CHARSET,
   taskSignature,
 } from './taskgen.js';
@@ -26,6 +32,12 @@ import { runHanziGame } from './game-hanzi.js';
 import { runTraceGame } from './game-trace.js';
 import { runShapesGame } from './game-shapes.js';
 import { runCompareGame } from './game-compare.js';
+import { runSubitizeGame } from './game-subitize.js';
+import { runPatternGame } from './game-pattern.js';
+import { runNumlineGame } from './game-numline.js';
+import { runStoryGame } from './game-story.js';
+import { runSortGame } from './game-sort.js';
+import { runSpatialGame } from './game-spatial.js';
 import { attachIdleHelp, guideHand } from './guide.js';
 import { initParentPanel } from './parent.js';
 import { PALETTE, addWheels } from './vehicles.js';
@@ -99,9 +111,55 @@ const GAME_DEFS = {
     bubble: t => ({ big: '帮我换上最大的那个！', small: '帮我选最小的那个！', long: '帮我接上最长的管子！', short: '帮我拿最短的管子！' })[t.kind],
     voice: t => [`task-compare-${t.kind}`],
   },
+  // ── 阶段6新游戏（设计依据见 docs/phase6-design-rationale.md 与 taskgen.js 各节注释） ──
+  subitize: {
+    skill: 'subitize', max: MAX_SUBITIZE_LEVEL,
+    gen: (rng, lvl) => genSubitizeTask(rng, lvl),
+    run: runSubitizeGame,
+    bubble: t => ({ sum: '两边一共亮几盏灯？', complement: '还差几盏，就亮满十盏？' })[t.ask] || '仪表盘亮了几盏灯？',
+    voice: t => [({ sum: 'task-sub-sum', complement: 'task-sub-ten' })[t.ask] || 'task-sub-count'],
+  },
+  pattern: {
+    skill: 'pattern', max: MAX_PATTERN_LEVEL,
+    gen: (rng, lvl) => genPatternTask(rng, lvl),
+    run: runPatternGame,
+    bubble: t => ({ extend: '下一个该放什么？', complete: '中间空的该放什么？', abstract: '哪一排规律一样？', unit: '哪一小段在重复？' })[t.kind],
+    voice: t => [({ extend: 'task-pat-next', complete: 'task-pat-mid', abstract: 'task-pat-same', unit: 'task-pat-unit' })[t.kind]],
+  },
+  numline: {
+    skill: 'numline', max: MAX_NUMLINE_LEVEL,
+    gen: (rng, lvl) => genNumlineTask(rng, lvl),
+    run: runNumlineGame,
+    bubble: t => ({ race: '我们来赛车！', estimate: '赛车停在哪里？', left: '还差几格到终点？' })[t.kind],
+    voice: t => [t.kind === 'race' ? (t.predict ? 'task-nl-predict' : 'task-nl-race') : (t.kind === 'estimate' ? 'task-nl-est' : 'task-nl-left')],
+  },
+  story: {
+    skill: 'story', max: MAX_STORY_LEVEL,
+    gen: (rng, lvl) => genStoryTask(rng, lvl),
+    run: runStoryGame,
+    bubble: () => '听故事，想一想！', // 不写算式：选加还是减本身就是要想的
+    voice: () => ['task-story'],
+  },
+  sort: {
+    skill: 'sort', max: MAX_SORT_LEVEL,
+    gen: (rng, lvl) => genSortTask(rng, lvl),
+    run: runSortGame,
+    bubble: t => ({ one: t.rule === 'color' ? '按颜色分！' : '按形状分！', switch: '先按颜色分！', border: '看金边分！', guess: '猜猜是怎么分的？', cross: '颜色形状都要对！' })[t.kind],
+    voice: t => [({ one: t.rule === 'color' ? 'task-sort-color' : 'task-sort-shape', switch: 'task-sort-switch', border: 'task-sort-border', guess: 'task-sort-guess', cross: 'task-sort-both' })[t.kind]],
+  },
+  spatial: {
+    skill: 'spatial', max: MAX_SPATIAL_LEVEL,
+    gen: (rng, lvl) => genSpatialTask(rng, lvl),
+    run: runSpatialGame,
+    bubble: t => (t.map ? '照着小图摆一摆！' : '放到对的地方！'),
+    voice: t => [t.map ? 'task-sp-map' : 'task-sp'],
+  },
 };
 
-const SKILL_GAME = { counting: 'tires', numerals: 'fuel', colors: 'lights', math: 'math', literacy: 'hanzi', tracing: 'trace', shapes: 'shapes', compare: 'compare' };
+const SKILL_GAME = {
+  counting: 'tires', numerals: 'fuel', colors: 'lights', math: 'math', literacy: 'hanzi', tracing: 'trace', shapes: 'shapes', compare: 'compare',
+  subitize: 'subitize', pattern: 'pattern', numline: 'numline', story: 'story', sort: 'sort', spatial: 'spatial',
+};
 
 // 每级一共有多少种不同的题：防重复只能记住比这少一个，否则会"想避也避不开"
 const SIG_SPACE = {
@@ -109,6 +167,7 @@ const SIG_SPACE = {
   fuel: { 1: 5, 2: 6, 3: 6, 4: 8 },
   shapes: { 1: 3, 2: 4, 3: 5, 4: 35, 5: 126, 6: 126 },
   compare: { 1: 4, 2: 6, 3: 6, 4: 16, 5: 20, 6: 16 },
+  subitize: { 1: 3, 2: 4, 3: 4, 4: 5, 5: 22, 6: 5 },
 };
 function recentCap(key, lvl) {
   const s = SIG_SPACE[key] && SIG_SPACE[key][lvl];
@@ -169,6 +228,12 @@ initParentPanel(store, () => data, {
   tracing: { name: '写字·描红', max: MAX_TRACE_LEVEL },
   shapes: { name: '图形·对孔', max: MAX_SHAPES_LEVEL },
   compare: { name: '比较·大小', max: MAX_COMPARE_LEVEL },
+  subitize: { name: '数感·闪灯', max: MAX_SUBITIZE_LEVEL },
+  pattern: { name: '规律·彩灯', max: MAX_PATTERN_LEVEL },
+  numline: { name: '数轴·赛道', max: MAX_NUMLINE_LEVEL },
+  story: { name: '应用·停车场', max: MAX_STORY_LEVEL },
+  sort: { name: '分类·分拣', max: MAX_SORT_LEVEL },
+  spatial: { name: '方位·摆放', max: MAX_SPATIAL_LEVEL },
 }, { sync });
 
 window.addEventListener('unhandledrejection', e => console.error('unhandled', e.reason));
@@ -205,7 +270,13 @@ const CORE_CLIPS = ['welcome',
   'math-jia', 'math-jian', 'math-dengyu-ji',
   'num-1', 'num-2', 'num-3', 'num-4', 'num-5',
   'friend-back-1', 'friend-back-2',
-  'vip-ask'];
+  'vip-ask',
+  // 新游戏的开场任务语音（第一单就可能用到）
+  'task-sub-count', 'task-sub-sum', 'task-sub-ten',
+  'task-pat-next', 'task-pat-mid', 'task-pat-same', 'task-pat-unit',
+  'task-nl-race', 'task-nl-predict', 'task-nl-est', 'task-nl-left',
+  'task-story', 'task-sort-color', 'task-sort-shape', 'task-sort-switch', 'task-sort-border', 'task-sort-guess', 'task-sort-both',
+  'task-sp', 'task-sp-map'];
 const REST_CLIPS = [
   ...Array.from({ length: 15 }, (_, i) => `num-${i + 6}`),
   ...Array.from({ length: 40 }, (_, i) => `char-${i + 1}`),
@@ -221,6 +292,19 @@ const REST_CLIPS = [
   'sticker-get-1', 'sticker-get-2', 'paint-get', 'wheel-get',
   'badge-get', 'album-open',
   'vip-accept-cheer', 'vip-decline-ok', 'vip-done', 'vip-drop',
+  'sub-eye', 'sub-idle', 'sub-again', 'sub-he', 'sub-shi', 'sub-couten',
+  'pat-wrong', 'pat-idle', 'pat-good', 'col-red', 'col-blue', 'col-yellow', 'col-green',
+  'shp-circle', 'shp-square', 'shp-triangle', 'shp-star',
+  'nl-where-pre', 'nl-where-post', 'nl-spin', 'nl-tapcar', 'nl-guess', 'nl-right', 'nl-walk', 'nl-myturn', 'nl-win',
+  'nl-zhongjian', 'nl-close', 'nl-idle-est', 'nl-idle-left',
+  'st-have-pre', 'st-cars', 'st-liang', 'st-comein', 'st-q-total', 'st-leave', 'st-q-left', 'st-total-pre', 'st-outside',
+  'st-q-hidden', 'st-some', 'st-now', 'st-q-came', 'st-red', 'st-blue', 'st-q-more', 'st-bluemore', 'st-blueless',
+  'st-q-blue', 'st-idle', 'st-again', 'st-pair', 'st-open',
+  'sort-switch', 'sort-by-shape', 'sort-by-color', 'sort-wrong-color', 'sort-wrong-shape', 'sort-wrong-guess',
+  'sort-wrong-both', 'sort-idle', 'sort-good',
+  'sp-ba', 'sp-fangdao', 'sp-first', 'sp-then', 'obj-wrench', 'obj-tire', 'obj-can', 'obj-flag', 'ref-car', 'ref-box',
+  'pos-up', 'pos-down', 'pos-in', 'pos-out', 'pos-side', 'pos-front', 'pos-back', 'pos-left', 'pos-right',
+  'sp-wrong', 'sp-good', 'sp-idle', 'sp-front-hint', 'sp-left-hint', 'sp-right-hint',
 ];
 preload(CORE_CLIPS, (done, total) => {
   bootHint.textContent = `正在准备声音 ${done}/${total}`;
@@ -287,15 +371,16 @@ async function nextJob() {
     review = dueReviews(data.skills, today)[0] || null;
   }
 
-  let pool = ['tires', 'fuel', 'lights', 'math', 'hanzi', 'trace', 'shapes', 'compare'];
+  let pool = ['tires', 'fuel', 'lights', 'math', 'hanzi', 'trace', 'shapes', 'compare',
+    'subitize', 'pattern', 'numline', 'story', 'sort', 'spatial'];
   if (customer.vehicle.meta.lockColor === 'skip') pool = pool.filter(g => g !== 'lights');
   if (review && !pool.includes(SKILL_GAME[review.skill])) review = null;
   // 按"落后程度"加权抽：玩得越少越容易轮到。纯随机时实测"换车灯"26单只轮到1次，
-  // 那个技能就一直停在1级、难度引擎也无从调节。
+  // 那个技能就一直停在1级、难度引擎也无从调节。落后再多也最多+5——新游戏上线时不会把老游戏挤没。
   const played = g => (data.stats.byGame[g] || { plays: 0 }).plays;
   const pickBalanced = cand => {
     const most = Math.max(...cand.map(played));
-    return rng.pickWeighted(cand, cand.map(g => 1 + most - played(g)));
+    return rng.pickWeighted(cand, cand.map(g => 1 + Math.min(5, most - played(g))));
   };
   let games;
   if (review) {

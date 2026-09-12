@@ -8,6 +8,7 @@ import { levelState, STATE_INFO, GAME_NAMES } from '../js/parent.js';
 import {
   MAX_TIRE_LEVEL, MAX_FUEL_LEVEL, MAX_LIGHTS_LEVEL, MAX_MATH_LEVEL,
   MAX_HANZI_LEVEL, MAX_TRACE_LEVEL, MAX_SHAPES_LEVEL, MAX_COMPARE_LEVEL,
+  MAX_SUBITIZE_LEVEL, MAX_PATTERN_LEVEL, MAX_NUMLINE_LEVEL, MAX_STORY_LEVEL, MAX_SORT_LEVEL, MAX_SPATIAL_LEVEL,
 } from '../js/taskgen.js';
 
 export const SKILLS = {
@@ -19,6 +20,12 @@ export const SKILLS = {
   tracing: { name: '写字·描红', game: 'trace', max: MAX_TRACE_LEVEL },
   shapes: { name: '图形·对孔', game: 'shapes', max: MAX_SHAPES_LEVEL },
   compare: { name: '比较·大小', game: 'compare', max: MAX_COMPARE_LEVEL },
+  subitize: { name: '数感·闪灯', game: 'subitize', max: MAX_SUBITIZE_LEVEL },
+  pattern: { name: '规律·彩灯', game: 'pattern', max: MAX_PATTERN_LEVEL },
+  numline: { name: '数轴·赛道', game: 'numline', max: MAX_NUMLINE_LEVEL },
+  story: { name: '应用·停车场', game: 'story', max: MAX_STORY_LEVEL },
+  sort: { name: '分类·分拣', game: 'sort', max: MAX_SORT_LEVEL },
+  spatial: { name: '方位·摆放', game: 'spatial', max: MAX_SPATIAL_LEVEL },
 };
 
 export const VERDICT = {

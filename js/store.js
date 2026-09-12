@@ -16,6 +16,9 @@ export function defaultSave() {
       counting: skill(), numerals: skill(), colors: skill(),
       math: skill(), literacy: skill(), tracing: skill(),
       shapes: skill(), compare: skill(),
+      // 阶段6：旧存档读出来时由 mergeDefaults 自动补上，从1级起步
+      subitize: skill(), pattern: skill(), numline: skill(),
+      story: skill(), sort: skill(), spatial: skill(),
     },
     stats: { daily: {}, byGame: {}, byVehicle: {}, log: [] },
     settings: { dailyJobs: 4 },

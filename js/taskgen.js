@@ -216,8 +216,332 @@ export function genCompareTask(rng, level) {
   return task;
 }
 
+// ── 闪灯看数（速视）──
+// 灯只亮一下（毫秒级），来不及一个个数。1级随意摆1-3个（感知性速视）；之后都用有结构的摆法
+// （骰子点、十格阵），练"一眼看出5和几"（概念性速视，Clements & Sarama）；5级两组合起来；
+// 6级十格阵看还差几个满十（凑十的基础）。
+export const SUBITIZE_LEVELS = {
+  1: { min: 1, max: 3, layout: 'scatter', ms: 2000, ask: 'count' },
+  2: { min: 2, max: 5, layout: 'dice', ms: 1500, ask: 'count' },
+  3: { min: 4, max: 7, layout: 'five', ms: 1300, ask: 'count' },
+  4: { min: 6, max: 10, layout: 'ten', ms: 1200, ask: 'count' },
+  5: { min: 4, max: 10, layout: 'twodice', ms: 1500, ask: 'sum' },
+  6: { min: 5, max: 9, layout: 'ten', ms: 1200, ask: 'complement' },
+};
+export const MAX_SUBITIZE_LEVEL = 6;
+// 1级随意摆的区域（游戏里居中放进仪表盘）；灯半径24，任意两灯中心至少相距48才不重叠
+export const SCATTER_BOX = { w: 360, h: 150 };
+
+// 三个选项：答案 + 两个相差1~3的干扰项，都在[lo, hi]里、不重复
+export function numberOptions(rng, answer, lo, hi) {
+  const opts = [answer];
+  for (let guard = 0; opts.length < 3 && guard < 100; guard++) {
+    const d = answer + rng.int(1, 3) * (rng.next() < 0.5 ? -1 : 1);
+    if (d >= lo && d <= hi && !opts.includes(d)) opts.push(d);
+  }
+  for (let v = lo; opts.length < 3 && v <= hi; v++) if (!opts.includes(v)) opts.push(v);
+  return rng.shuffle(opts);
+}
+
+function scatterSpots(rng, n) {
+  // 3列×2行的格子里挑n格、格内轻微抖动：看着随意，又保证两灯不重叠
+  const cells = rng.shuffle([0, 1, 2, 3, 4, 5]).slice(0, n);
+  const r2 = v => Math.round(v * 100) / 100;
+  return cells.map(c => {
+    const col = c % 3, row = Math.floor(c / 3);
+    return [r2((col + 0.5 + (rng.next() - 0.5) * 0.4) / 3), r2((row + 0.5 + (rng.next() - 0.5) * 0.2) / 2)];
+  });
+}
+
+export function genSubitizeTask(rng, level) {
+  const l = Math.max(1, Math.min(Math.floor(level), MAX_SUBITIZE_LEVEL));
+  const { min, max, layout, ms, ask } = SUBITIZE_LEVELS[l];
+  const n = rng.int(min, max);
+  const task = { type: 'subitize', layout, ms, ask, n };
+  if (layout === 'scatter') task.spots = scatterSpots(rng, n);
+  if (layout === 'twodice') {
+    const a = rng.int(Math.max(1, n - 5), Math.min(5, n - 1));
+    task.parts = [a, n - a];
+  }
+  task.answer = ask === 'complement' ? 10 - n : n;
+  task.options = numberOptions(rng, task.answer, 1, 10);
+  return task;
+}
+
+// ── 找规律 ──
+// 延伸 → 补空 → 抽象（换一种材料摆出同样的规律）→ 找出重复单元；单元 AB → AAB/ABB → ABC/AABB。
+// （Rittle-Johnson 等：学前重复规律能力预测到小学四到六年级的数学成绩；指南5-6岁"能发现事物简单的排列规律"，
+//  教育建议举的正是"按颜色间隔排列的瓷砖、按形状间隔排列的珠帘"——所以先颜色后形状。）
+export const PATTERN_VALUES = {
+  color: ['red', 'blue', 'yellow', 'green'],
+  shape: ['circle', 'square', 'triangle', 'star'],
+};
+export const PATTERN_LEVELS = {
+  1: { kind: 'extend', attr: 'color', units: ['AB'], opts: 2 },
+  2: { kind: 'extend', attr: 'color', units: ['AAB', 'ABB'], opts: 3 },
+  3: { kind: 'extend', attr: 'color', units: ['ABC', 'AABB'], opts: 3 },
+  4: { kind: 'complete', attr: 'shape', units: ['AB', 'AAB', 'ABB', 'ABC'], opts: 3 },
+  5: { kind: 'abstract', attr: 'color', units: ['AB', 'AAB', 'ABB', 'ABC'], opts: 3 },
+  6: { kind: 'unit', attr: 'color', units: ['AAB', 'ABB', 'AABB', 'ABC'], opts: 3 },
+};
+export const MAX_PATTERN_LEVEL = 6;
+
+// 把一排东西规范成字母结构：红红蓝红红蓝 → AABAAB。两排"规律一样"就是结构一样，材料可以不同。
+export function patternShape(seq) {
+  const map = new Map();
+  return seq.map(v => {
+    if (!map.has(v)) map.set(v, String.fromCharCode(65 + map.size));
+    return map.get(v);
+  }).join('');
+}
+
+function pickOptions(rng, answer, used, pool, n) {
+  const opts = [answer];
+  for (const v of rng.shuffle(used)) if (opts.length < n && !opts.includes(v)) opts.push(v);
+  for (const v of rng.shuffle(pool)) if (opts.length < n && !opts.includes(v)) opts.push(v);
+  return rng.shuffle(opts);
+}
+
+export function genPatternTask(rng, level) {
+  const l = Math.max(1, Math.min(Math.floor(level), MAX_PATTERN_LEVEL));
+  const cfg = PATTERN_LEVELS[l];
+  const unit = rng.pick(cfg.units);
+  const nLetters = new Set(unit).size;
+  const vals = rng.shuffle(PATTERN_VALUES[cfg.attr]).slice(0, nLetters);
+  const unitVals = [...unit].map(ch => vals[ch.charCodeAt(0) - 65]);
+  const repeat = len => Array.from({ length: len }, (_, i) => unitVals[i % unit.length]);
+  const task = { type: 'pattern', kind: cfg.kind, attr: cfg.attr, unit };
+  if (cfg.kind === 'extend') {
+    const k = rng.int(0, unit.length - 1); // 最后一段露出几个：下一个不总是"第一个"
+    task.items = [...repeat(2 * unit.length + k), null];
+    const answer = unitVals[k];
+    task.options = pickOptions(rng, answer, vals, PATTERN_VALUES[cfg.attr], cfg.opts);
+    task.answerIdx = task.options.indexOf(answer);
+  } else if (cfg.kind === 'complete') {
+    const full = repeat(3 * unit.length);
+    const miss = rng.int(unit.length, full.length - 1); // 第一段保持完整，看得出规律
+    task.items = full.map((v, i) => (i === miss ? null : v));
+    task.options = pickOptions(rng, full[miss], vals, PATTERN_VALUES[cfg.attr], cfg.opts);
+    task.answerIdx = task.options.indexOf(full[miss]);
+  } else if (cfg.kind === 'abstract') {
+    // 上面彩灯、下面形状：找结构一样的那一排（换材料的抽象，最能让孩子盯住"单元"）
+    task.model = repeat(2 * unit.length);
+    const shapes = rng.shuffle(PATTERN_VALUES.shape);
+    const len = task.model.length;
+    const build = u => Array.from({ length: len }, (_, i) => shapes[u.charCodeAt(i % u.length) - 65]);
+    const target = patternShape(task.model);
+    const rows = [build(unit)];
+    for (const u of rng.shuffle(['AB', 'AAB', 'ABB', 'ABC', 'AABB', 'ABBC'])) {
+      if (rows.length >= cfg.opts) break;
+      const r = build(u);
+      const s = patternShape(r);
+      if (s !== target && !rows.some(x => patternShape(x) === s)) rows.push(r);
+    }
+    task.options = rng.shuffle(rows);
+    task.answerIdx = task.options.findIndex(r => patternShape(r) === target);
+  } else {
+    // 找单元：一长串里哪一小段在重复（选项：正确单元 / 少一个 / 多一个）
+    task.items = repeat(3 * unit.length);
+    task.options = rng.shuffle([unitVals, unitVals.slice(0, unit.length - 1), [...unitVals, unitVals[0]]]);
+    task.answerIdx = task.options.indexOf(unitVals);
+  }
+  return task;
+}
+
+// ── 数字赛道 ──
+// Siegler & Ramani (2008, 2009)：1-10 的直线数字棋盘、走的时候说出格子上的数（"7、8"而不是"1、2"），
+// 四次15-20分钟就提升数大小比较、数轴估计、计数、认数字，9周后仍在；环形棋盘、只有颜色的棋盘都不行。
+// Siegler & Booth (2004)：数轴估计从"对数式"走向"线性式"，准确度与数学成绩强相关——
+// 学前先练 0-10、0-20（0-100 要到一二年级才普遍线性）。
+export const NUMLINE_LEVELS = {
+  1: { kind: 'race', end: 10, spin: [1, 2], predict: false }, // 点赛车一格一格走，每格报数
+  2: { kind: 'race', end: 10, spin: [1, 3], predict: true }, // 转完先猜停在哪一格
+  3: { kind: 'race', end: 20, spin: [2, 4], predict: true },
+  4: { kind: 'estimate', end: 10, rounds: 3, tol: 0.8 }, // 数字擦掉了，只剩两头：7在哪里？
+  5: { kind: 'estimate', end: 20, rounds: 3, tol: 1.5 },
+  6: { kind: 'left', end: 20, rounds: 3 }, // 赛车在13，还差几格到终点？
+};
+export const MAX_NUMLINE_LEVEL = 6;
+
+export function genNumlineTask(rng, level) {
+  const l = Math.max(1, Math.min(Math.floor(level), MAX_NUMLINE_LEVEL));
+  const cfg = NUMLINE_LEVELS[l];
+  const task = { type: 'numline', kind: cfg.kind, end: cfg.end };
+  if (cfg.kind === 'race') {
+    // 整局的转盘结果先掷好（可复现、可测）；从第1格出发，跑到终点为止
+    const spins = [];
+    let pos = 1;
+    while (pos < cfg.end && spins.length < 30) {
+      const s = rng.int(cfg.spin[0], cfg.spin[1]);
+      spins.push(s);
+      pos = Math.min(cfg.end, pos + s);
+    }
+    task.spins = spins;
+    task.predict = cfg.predict;
+  } else if (cfg.kind === 'estimate') {
+    // 避开紧挨两头的数（太容易），三轮不重复
+    task.targets = rng.shuffle(Array.from({ length: cfg.end - 3 }, (_, i) => i + 2)).slice(0, cfg.rounds);
+    task.tol = cfg.tol;
+  } else {
+    task.positions = rng.shuffle(Array.from({ length: 11 }, (_, i) => i + 8)).slice(0, cfg.rounds);
+    task.options = task.positions.map(p => numberOptions(rng, cfg.end - p, 1, 15));
+  }
+  return task;
+}
+
+// ── 停车场故事题（CGI 认知指导教学）──
+// 四类加减情境：合并、分离、部分-整体、比较；未知数放在"结果/变化/起点"难度不同。幼儿先"直接建模"
+// （照故事摆出来数），再到接着数、推理。指南5-6岁："借助实际情境和操作（如合并或拿取）理解'加'和'减'的
+// 实际意义"，教育建议原例"家里来了5位客人，桌子上只有3个杯子，还需要几个杯子"；2024人教版一下
+// 《数量间的加减关系》：求一个数比另一个数多（少）几、求比一个数多（少）几的数。
+// 统一表示成算式 x op y = z（讲解最后念出来）。
+export const STORY_LEVELS = {
+  1: { kind: 'join', max: 5 }, // 又开来了几辆，现在一共几辆？
+  2: { kind: 'separate', max: 10 }, // 开走了几辆，还剩几辆？
+  3: { kind: 'hidden', max: 10 }, // 一共几辆、外面几辆，车库里藏着几辆？（部分-整体 / 分与合）
+  4: { kind: 'change', max: 10 }, // 开来了一些，现在几辆，开来了几辆？（变化未知）
+  5: { kind: 'compare', max: 10 }, // 红车比蓝车多几辆？（一一对应）
+  6: { kind: 'compareq', max: 10 }, // 蓝车比红车多/少几辆，蓝车有几辆？
+};
+export const MAX_STORY_LEVEL = 6;
+
+export function genStoryTask(rng, level) {
+  const l = Math.max(1, Math.min(Math.floor(level), MAX_STORY_LEVEL));
+  const { kind, max } = STORY_LEVELS[l];
+  let x;
+  let y;
+  let z;
+  let op;
+  const extra = {};
+  if (kind === 'join') { x = rng.int(1, max - 1); y = rng.int(1, max - x); op = '+'; z = x + y; }
+  else if (kind === 'separate' || kind === 'hidden' || kind === 'compare') { x = rng.int(3, max); y = rng.int(1, x - 1); op = '-'; z = x - y; }
+  else if (kind === 'change') { x = rng.int(1, max - 2); z = rng.int(x + 1, max); op = '+'; y = z - x; }
+  else {
+    const more = rng.next() < 0.5;
+    x = rng.int(2, 8);
+    y = Math.min(rng.int(1, 3), more ? max - x : x - 1);
+    op = more ? '+' : '-';
+    z = more ? x + y : x - y;
+    extra.more = more;
+  }
+  const answer = kind === 'change' ? y : z;
+  return { type: 'story', kind, x, op, y, z, answer, options: numberOptions(rng, answer, 1, 10), ...extra };
+}
+
+// ── 零件分拣（分类 + 规则切换）──
+// 指南4-5岁"能感知和发现常见几何图形的基本特征，并能进行分类"，教育建议"按形状分类整理物品"；
+// DCCS（Zelazo）：先按颜色分、再换按形状分——多数3岁孩子换不过来、4-5岁多数能过；
+// 按线索每题换规则（有金边按形状、没金边按颜色）更难。练的是分类，也是认知灵活性（执行功能）。
+// 5级不告诉规则，看筐里的示例自己猜（归纳推理）；6级两个特征交叉分（二级分类）。
+export const SORT_LEVELS = {
+  1: { kind: 'one', rule: 'color' },
+  2: { kind: 'one', rule: 'shape' },
+  3: { kind: 'switch' },
+  4: { kind: 'border' },
+  5: { kind: 'guess' },
+  6: { kind: 'cross' },
+};
+export const MAX_SORT_LEVEL = 6;
+export const SORT_COLORS = ['red', 'blue', 'yellow', 'green'];
+export const SORT_SHAPES = ['circle', 'square', 'triangle', 'star'];
+const part = (color, shape, size = 'mid', extra = {}) => ({ color, shape, size, ...extra });
+
+export function genSortTask(rng, level) {
+  const l = Math.max(1, Math.min(Math.floor(level), MAX_SORT_LEVEL));
+  const cfg = SORT_LEVELS[l];
+  const [c1, c2] = rng.shuffle(SORT_COLORS).slice(0, 2);
+  const [s1, s2] = rng.shuffle(SORT_SHAPES).slice(0, 2);
+  const task = { type: 'sort', kind: cfg.kind };
+  if (cfg.kind === 'one') {
+    task.rule = cfg.rule;
+    const byColor = cfg.rule === 'color';
+    task.bins = byColor ? [{ color: c1 }, { color: c2 }] : [{ shape: s1 }, { shape: s2 }];
+    task.items = rng.shuffle([0, 0, 1, 1]).map(b => (byColor ? part([c1, c2][b], s1, 'mid', { bin: b }) : part(c1, [s1, s2][b], 'mid', { bin: b })));
+  } else if (cfg.kind === 'switch' || cfg.kind === 'border') {
+    // 经典 DCCS：目标卡"c1s1""c2s2"，测试卡"c1s2""c2s1"——按颜色和按形状会进不同的筐
+    task.bins = [{ color: c1, shape: s1 }, { color: c2, shape: s2 }];
+    const cards = [{ color: c1, shape: s2 }, { color: c2, shape: s1 }];
+    const binFor = (cd, rule) => (rule === 'color' ? (cd.color === c1 ? 0 : 1) : (cd.shape === s1 ? 0 : 1));
+    if (cfg.kind === 'switch') {
+      const pre = rng.shuffle([...cards, rng.pick(cards)]);
+      const post = rng.shuffle([...cards, rng.pick(cards)]);
+      task.items = [
+        ...pre.map(cd => part(cd.color, cd.shape, 'mid', { rule: 'color', bin: binFor(cd, 'color') })),
+        ...post.map(cd => part(cd.color, cd.shape, 'mid', { rule: 'shape', bin: binFor(cd, 'shape') })),
+      ];
+      task.switchAt = pre.length;
+    } else {
+      task.items = rng.shuffle(['color', 'color', 'color', 'shape', 'shape', 'shape']).map(rule => {
+        const cd = rng.pick(cards);
+        return part(cd.color, cd.shape, 'mid', { rule, border: rule === 'shape', bin: binFor(cd, rule) });
+      });
+    }
+  } else if (cfg.kind === 'guess') {
+    // 每个筐里两件示例：只有"规则那一项"一样，另外两项在筐内都不同——才猜得出是按什么分的
+    const rule = rng.pick(['color', 'shape', 'size']);
+    task.rule = rule;
+    const EX = {
+      color: [[part(c1, s1, 'big'), part(c1, s2, 'small')], [part(c2, s2, 'big'), part(c2, s1, 'small')]],
+      shape: [[part(c1, s1, 'big'), part(c2, s1, 'small')], [part(c2, s2, 'big'), part(c1, s2, 'small')]],
+      size: [[part(c1, s1, 'big'), part(c2, s2, 'big')], [part(c2, s1, 'small'), part(c1, s2, 'small')]],
+    };
+    task.bins = EX[rule].map(examples => ({ examples }));
+    const key = { color: [c1, c2], shape: [s1, s2], size: ['big', 'small'] }[rule];
+    task.items = rng.shuffle([0, 0, 1, 1]).map(b => part(
+      rule === 'color' ? key[b] : rng.pick([c1, c2]),
+      rule === 'shape' ? key[b] : rng.pick([s1, s2]),
+      rule === 'size' ? key[b] : rng.pick(['big', 'small']),
+      { bin: b },
+    ));
+  } else {
+    task.bins = [{ color: c1, shape: s1 }, { color: c1, shape: s2 }, { color: c2, shape: s1 }, { color: c2, shape: s2 }];
+    task.items = rng.shuffle([0, 1, 2, 3, rng.int(0, 3), rng.int(0, 3)]).map(b => part(task.bins[b].color, task.bins[b].shape, 'mid', { bin: b }));
+  }
+  return task;
+}
+
+// ── 方位 ──
+// 指南目标3：3-4岁理解上下、前后、里外；4-5岁用上下、前后、里外、中间、旁边描述位置；
+// 5-6岁"能按语言指示或根据简单示意图正确取放物品""能辨别自己的左右"。教育建议原例：按指令找宝——
+// 小的按语言指令，大的按简单示意图。空间语言训练（4-6岁练前后左右）能提升数量大小理解；"左右"最难，放后面。
+// 参照物：前后用"有车头的车"（车头朝左：车灯那边是前面）；左右用对称的工具箱（不会和前后打架）。
+export const SPATIAL_LEVELS = {
+  1: { scene: 'car', words: ['up', 'down'], rounds: 3, steps: 1 },
+  2: { scene: 'box', words: ['in', 'out', 'side'], rounds: 3, steps: 1 },
+  3: { scene: 'car', words: ['front', 'back', 'up', 'down'], rounds: 3, steps: 1 },
+  4: { scene: 'box', words: ['left', 'right'], rounds: 3, steps: 1 },
+  5: { scene: 'car', words: ['up', 'down', 'front', 'back'], rounds: 2, steps: 2 }, // 两步指令（先……再……）
+  6: { scene: 'car', words: ['up', 'down', 'front', 'back'], rounds: 2, steps: 2, map: true }, // 照小图摆
+};
+export const MAX_SPATIAL_LEVEL = 6;
+export const SPATIAL_OBJECTS = ['wrench', 'tire', 'can', 'flag'];
+
+export function genSpatialTask(rng, level) {
+  const l = Math.max(1, Math.min(Math.floor(level), MAX_SPATIAL_LEVEL));
+  const cfg = SPATIAL_LEVELS[l];
+  let words;
+  if (cfg.steps === 1) {
+    if (cfg.words.length === 2) words = rng.shuffle([...cfg.words, rng.pick(cfg.words)]); // 两个词都出现，又不是死板交替
+    else if (l === 3) words = rng.shuffle(['front', 'back', rng.pick(['up', 'down'])]); // 前、后一定都练到
+    else words = rng.shuffle(cfg.words).slice(0, cfg.rounds);
+  }
+  const rounds = [];
+  for (let r = 0; r < cfg.rounds; r++) {
+    const objs = rng.shuffle(SPATIAL_OBJECTS).slice(0, cfg.steps);
+    const ws = cfg.steps === 1 ? [words[r]] : rng.shuffle(cfg.words).slice(0, cfg.steps); // 一轮里两个地方不同
+    rounds.push(objs.map((obj, i) => ({ obj, word: ws[i] })));
+  }
+  return { type: 'spatial', scene: cfg.scene, map: !!cfg.map, rounds };
+}
+
 export function taskSignature(key, task) {
   switch (key) {
+    case 'spatial': return `z-${task.scene}-${task.rounds.map(r => r.map(s => s.obj[0] + s.word).join('+')).join('.')}`;
+    case 'sort': return `o-${task.kind}-${task.rule || ''}-${task.items.map(i => `${i.color[0]}${i.shape[0]}${i.bin}`).join('.')}`;
+    case 'story': return `s-${task.kind}-${task.x}${task.op}${task.y}`;
+    case 'numline': return `n-${task.kind}-${task.end}-${(task.spins || task.targets || task.positions).join('.')}`;
+    case 'pattern': return `p-${task.kind}-${task.unit}-${(task.model || task.items).map(v => v || '_').join('.')}`;
+    case 'subitize': return `u-${task.ask}-${task.parts ? task.parts.join('+') : task.n}`;
     case 'tires': return `c${task.count}`;
     case 'fuel': return `f${task.target}`;
     case 'lights': return '';

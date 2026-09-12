@@ -1,5 +1,5 @@
 // 每次发布内容更新必须改VERSION（如garage-v10），否则iPad拿不到新资源
-const VERSION = 'garage-v12';
+const VERSION = 'garage-v13';
 const HANZI = ['一', '二', '三', '人', '大', '小', '上', '下', '口', '中',
   '山', '水', '火', '土', '木', '日', '月', '手', '车', '门',
   '天', '地', '你', '我', '他', '白', '云', '雨', '风', '花',
@@ -25,6 +25,21 @@ const AUDIO_NAMES = [
   'math-yigong', 'math-bigfirst', 'math-open', 'math-haisheng', 'math-couten',
   'task-hanzi-prefix', 'task-hanzi-suffix', 'hanzi-wrong', 'idle-hanzi',
   'task-trace-prefix', 'task-trace-suffix', 'trace-hint', 'trace-good', 'idle-trace',
+  'task-sub-count', 'task-sub-sum', 'task-sub-ten', 'sub-eye', 'sub-idle', 'sub-again', 'sub-he', 'sub-shi', 'sub-couten',
+  'task-pat-next', 'task-pat-mid', 'task-pat-same', 'task-pat-unit', 'pat-wrong', 'pat-idle', 'pat-good',
+  'col-red', 'col-blue', 'col-yellow', 'col-green', 'shp-circle', 'shp-square', 'shp-triangle', 'shp-star',
+  'task-nl-race', 'task-nl-predict', 'task-nl-est', 'task-nl-left', 'nl-where-pre', 'nl-where-post',
+  'nl-spin', 'nl-tapcar', 'nl-guess', 'nl-right', 'nl-walk', 'nl-myturn', 'nl-win', 'nl-zhongjian',
+  'nl-close', 'nl-idle-est', 'nl-idle-left',
+  'task-story', 'st-have-pre', 'st-cars', 'st-liang', 'st-comein', 'st-q-total', 'st-leave', 'st-q-left',
+  'st-total-pre', 'st-outside', 'st-q-hidden', 'st-some', 'st-now', 'st-q-came', 'st-red', 'st-blue',
+  'st-q-more', 'st-bluemore', 'st-blueless', 'st-q-blue', 'st-idle', 'st-again', 'st-pair', 'st-open',
+  'task-sort-color', 'task-sort-shape', 'task-sort-switch', 'sort-switch', 'task-sort-border', 'sort-by-shape',
+  'sort-by-color', 'task-sort-guess', 'task-sort-both', 'sort-wrong-color', 'sort-wrong-shape', 'sort-wrong-guess',
+  'sort-wrong-both', 'sort-idle', 'sort-good',
+  'task-sp', 'task-sp-map', 'sp-ba', 'sp-fangdao', 'sp-first', 'sp-then', 'obj-wrench', 'obj-tire', 'obj-can',
+  'obj-flag', 'ref-car', 'ref-box', 'pos-up', 'pos-down', 'pos-in', 'pos-out', 'pos-side', 'pos-front', 'pos-back',
+  'pos-left', 'pos-right', 'sp-wrong', 'sp-good', 'sp-idle', 'sp-front-hint', 'sp-left-hint', 'sp-right-hint',
   ...Array.from({ length: 20 }, (_, i) => `num-${i + 1}`),
   ...Array.from({ length: 40 }, (_, i) => `char-${i + 1}`),
 ];
@@ -37,7 +52,8 @@ const ASSETS = [
   'js/taskgen.js', 'js/rng.js', 'js/parent.js', 'js/mastery.js',
   'js/hub.js', 'js/mycar.js', 'js/album.js', 'js/vip.js',
   'js/rewards.js', 'js/rewards-data.js', 'js/game-shapes.js', 'js/game-compare.js',
-  'js/sync.js',
+  'js/sync.js', 'js/game-subitize.js', 'js/game-pattern.js', 'js/game-numline.js', 'js/game-story.js',
+  'js/game-sort.js', 'js/game-spatial.js',
   'vendor/hanzi-writer.min.js',
   ...HANZI.map(c => `vendor/hanzi-data/${c}.json`),
   'audio/silence.wav',
