@@ -108,7 +108,7 @@ export function runPatternGame(garage, customer, task, attachIdleHelp) {
     }
     // 从头念一念，念到空位就停（留给他自己接）。念的时候他一点选项就打断——孩子的动作永远优先
     let readToken = 0;
-    async function readRow() {
+    async function readRow(fromHint = false) {
       const my = ++readToken;
       for (let i = 0; i < L; i++) {
         if (my !== readToken) return;
@@ -116,7 +116,8 @@ export function runPatternGame(garage, customer, task, attachIdleHelp) {
         hop(rowNodes[i]);
         await say(WORD[row[i]]);
       }
-      if (my === readToken) idle.reset();
+      // 提示触发的重念只重新计时、不清零，下一级才会指出答案
+      if (my === readToken) { if (fromHint) idle.rearm(); else idle.reset(); }
     }
     async function readOption(i) {
       const seq = task.options[i];
@@ -131,7 +132,7 @@ export function runPatternGame(garage, customer, task, attachIdleHelp) {
       if (document.getElementById('parent-panel') || busy || finished) return;
       if (fires === 1) { sayNow('pat-idle'); return; } // 只是提醒方法，不算求助
       helps += 1;
-      if (fires === 2) { readRow(); return; }
+      if (fires === 2) { readRow(true); return; }
       const right = opts[task.answerIdx];
       if (right) { window.__guideHand?.(right, right); pulse(right); }
     }, 18000);

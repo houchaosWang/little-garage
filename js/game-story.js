@@ -178,7 +178,7 @@ export function runStoryGame(garage, customer, task, attachIdleHelp) {
         ];
       }
     }
-    async function tell(first) {
+    async function tell(first, fromHint = false) {
       const my = ++tellToken;
       for (const s of steps()) {
         if (my !== tellToken || finished) return;
@@ -187,7 +187,8 @@ export function runStoryGame(garage, customer, task, attachIdleHelp) {
         await say(...s.voice);
       }
       if (first) { showPlates(); busy = false; }
-      if (my === tellToken) idle.reset();
+      // 提示触发的重讲只重新计时、不清零——清零的话永远到不了"一起摆一摆"
+      if (my === tellToken) { if (fromHint) idle.rearm(); else idle.reset(); }
     }
 
     // ── 算式与讲解（示范：接着数 / 打开车库 / 一辆对一辆） ──
@@ -310,7 +311,7 @@ export function runStoryGame(garage, customer, task, attachIdleHelp) {
       }
       if (fires === 1) { sayNow('st-idle'); return; } // 只是提醒回想，不算求助
       helps += 1;
-      if (fires === 2) { sayNow('st-again'); setTimeout(() => tell(false), 1300); return; }
+      if (fires === 2) { sayNow('st-again'); setTimeout(() => tell(false, true), 1300); return; }
       sayNow('math-yiqi');
       walkthrough();
     }, 18000);

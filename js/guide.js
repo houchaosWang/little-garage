@@ -15,6 +15,9 @@ export function attachIdleHelp(stage, onIdle, ms = 12000) {
   reset();
   return {
     reset,
+    // 提示自己放完一段（重播、重讲、重念）后用：重新计时，但不清零——
+    // 若用 reset，阶梯永远回到第1级，卡住的孩子等不到讲解和指答案
+    rearm() { arm(); },
     dispose() {
       disposed = true;
       clearTimeout(timer);

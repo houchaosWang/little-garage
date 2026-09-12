@@ -113,7 +113,7 @@ export function runSubitizeGame(garage, customer, task, attachIdleHelp) {
       plates.push(p);
     });
 
-    async function flash({ free = false } = {}) {
+    async function flash({ free = false, hint = false } = {}) {
       if (busy || finished) return;
       busy = true;
       looks += 1;
@@ -124,7 +124,7 @@ export function runSubitizeGame(garage, customer, task, attachIdleHelp) {
       if (!explained) show(false);
       busy = false;
       if (!answered) { answered = true; plates.forEach(p => { p.style.visibility = 'visible'; }); }
-      idle.reset();
+      if (hint) idle.rearm(); else idle.reset(); // 提示触发的重播不清零，下一级才会讲结构
     }
 
     // "说出结构"：五和二是七 / 三和四一共是七 / 七和三凑成十
@@ -158,7 +158,7 @@ export function runSubitizeGame(garage, customer, task, attachIdleHelp) {
       }
       if (fires === 1 && !explained) { sayNow('sub-idle'); return; } // 鼓励回想，不算求助
       helps += 1;
-      if (!explained && fires === 2) { sayNow('sub-again'); setTimeout(() => flash({ free: true }), 900); return; }
+      if (!explained && fires === 2) { sayNow('sub-again'); setTimeout(() => flash({ free: true, hint: true }), 900); return; }
       if (!explained) { explain(); return; }
       const right = plates.find(p => Number(p.dataset.val) === task.answer);
       if (right) { window.__guideHand?.(right, right); pulse(right); }
