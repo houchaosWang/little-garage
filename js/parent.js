@@ -35,12 +35,26 @@ export function buildReport(data, skillMeta, today) {
   return lines.join('\n');
 }
 
+function fmtWhen(ts, now) {
+  const d = new Date(ts);
+  const p = n => String(n).padStart(2, '0');
+  const hm = `${p(d.getHours())}:${p(d.getMinutes())}`;
+  return localDate(d) === localDate(now) ? `今天 ${hm}` : `${d.getMonth() + 1}月${d.getDate()}日 ${hm}`;
+}
+
+// 家长面板上"同步到电脑"那一行说什么
+export function syncLine(enabled, st, now = new Date()) {
+  if (!enabled) return '这份不是从家里电脑装的，进度不会同步到电脑';
+  if (!st || !st.okAt) return '还没同步到电脑（电脑上的服务器开着时会自动同步）';
+  return `已同步到电脑 · ${fmtWhen(st.okAt, now)}`;
+}
+
 // NOTE for node-safety: everything below that touches `document`/`window` lives
 // inside initParentPanel (or functions it defines), which only runs when a
 // caller invokes it. The module top level only defines the pure helpers above,
 // so importing this file under Node (as tests/parent.test.mjs does) never
 // touches the DOM and cannot throw.
-export function initParentPanel(store, getData, skillMeta) {
+export function initParentPanel(store, getData, skillMeta, { sync } = {}) {
   const pointers = new Map();
   let timer = null;
 
@@ -84,6 +98,7 @@ export function initParentPanel(store, getData, skillMeta) {
     wrap.innerHTML = `
       <div class="pp-card">
         <p class="pp-title">家长设置</p>
+        ${sync ? `<p class="pp-stat pp-sync"><span id="pp-sync">${syncLine(sync.enabled, sync.status())}</span>${sync.enabled ? '<button type="button" class="pp-link" data-act="sync-now">立即同步</button>' : ''}</p>` : ''}
         <div class="pp-row">
           <span>每日营业单数</span>
           <div class="pp-step">
@@ -140,6 +155,17 @@ export function initParentPanel(store, getData, skillMeta) {
         };
         if (navigator.share) navigator.share({ text }).catch(fallback);
         else fallback();
+      } else if (act === 'sync-now') {
+        const btn = e.target;
+        const line = wrap.querySelector('#pp-sync');
+        btn.disabled = true;
+        btn.textContent = '同步中…';
+        sync.schedule(getData());
+        sync.flush().then(ok => {
+          line.textContent = ok ? syncLine(true, sync.status()) : '没连上电脑：服务器窗口开着吗？和电脑连的是同一个WiFi吗？';
+          btn.textContent = ok ? '✓ 已同步' : '再试一次';
+          btn.disabled = false;
+        });
       } else if (act === 'io') {
         const open = ioBox.hidden;
         ioBox.hidden = !open;

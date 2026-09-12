@@ -1,6 +1,7 @@
 import { unlock, sfx, say, sayNow, preload, setPaused } from './audio.js';
 import { makeRng } from './rng.js';
 import { createStore, localDate } from './store.js';
+import { createSync, shouldSync } from './sync.js';
 import { createGarage } from './garage.js';
 import { effectiveLevel, recordOutcome } from './difficulty.js';
 import { onPromoted, dueReviews, onReviewResult, seedMissingMastery } from './mastery.js';
@@ -131,7 +132,28 @@ const rotateTip = document.getElementById('rotate-tip');
 window.__guideHand = (a, b) => guideHand(stage, a, b);
 
 const rng = makeRng();
-const store = createStore(window.localStorage);
+// 当前装的是哪一版：一起报给电脑，好知道 iPad 更新到了没有
+let appVersion = '';
+if (window.caches) {
+  caches.keys().then(ks => {
+    const vs = ks.filter(k => /^garage-v\d+$/.test(k)).sort((a, b) => Number(b.slice(8)) - Number(a.slice(8)));
+    appVersion = vs[0] || '';
+  }).catch(() => {});
+}
+const sync = createSync({
+  enabled: shouldSync(location),
+  storage: window.localStorage,
+  app: () => appVersion,
+  post: body => fetch('api/progress', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body,
+    keepalive: body.length < 60000, // keepalive 有 64KB 上限，超了就退回普通请求
+  }).then(r => r.ok),
+});
+document.addEventListener('visibilitychange', () => { if (document.hidden) sync.flush(); });
+window.addEventListener('pagehide', () => { sync.flush(); });
+const store = createStore(window.localStorage, localDate, { onSave: d => sync.schedule(d) });
 let data = store.load();
 seedMissingMastery(data.skills, localDate());
 store.save(data);
@@ -144,7 +166,7 @@ initParentPanel(store, () => data, {
   tracing: { name: '写字·描红', max: MAX_TRACE_LEVEL },
   shapes: { name: '图形·对孔', max: MAX_SHAPES_LEVEL },
   compare: { name: '比较·大小', max: MAX_COMPARE_LEVEL },
-});
+}, { sync });
 
 window.addEventListener('unhandledrejection', e => console.error('unhandled', e.reason));
 let jobRunning = false;
@@ -284,7 +306,9 @@ async function nextJob() {
     if (i === 0) voices.unshift(customer.isFriend ? (rng.next() < 0.5 ? 'friend-back-1' : 'friend-back-2') : customer.vehicle.meta.intro);
     garage.showBubble(def.bubble(task), voices);
     window.__firstTirePlay = key === 'tires' && !data.stats.byGame.tires;
+    const t0 = performance.now(); // 出题到做完（含语音时长，只用来比相对快慢）
     const outcome = await def.run(garage, customer, task, attachIdleHelp);
+    const ms = performance.now() - t0;
     if (!outcome.aborted) {
       if (skill) {
         if (isReview) {
@@ -299,7 +323,10 @@ async function nextJob() {
           if (Math.floor(after.level) > before) onPromoted(skill, before, today);
         }
       }
-      store.recordGame(data, key, outcome);
+      store.recordGame(data, key, outcome, {
+        level: skill ? lvl : 0, ms, review: isReview, vip: vipActive,
+        sig: skill ? taskSignature(key, task) : '',
+      });
     }
   }
   addWheels(customer.vehicle);

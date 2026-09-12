@@ -85,7 +85,7 @@ test('残缺存档load时用默认值补全缺失字段', () => {
   assert.equal(d.skills.counting.level, 1);
   assert.equal(d.skills.counting.streak, 0);
   assert.equal(d.settings.dailyJobs, 4);
-  assert.deepEqual(d.stats, { daily: {}, byGame: {}, byVehicle: {} });
+  assert.deepEqual(d.stats, { daily: {}, byGame: {}, byVehicle: {}, log: [] });
 });
 
 test('reopenToday 清除当日计数并立即生效', () => {

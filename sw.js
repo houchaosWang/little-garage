@@ -1,5 +1,5 @@
 // 每次发布内容更新必须改VERSION（如garage-v10），否则iPad拿不到新资源
-const VERSION = 'garage-v10';
+const VERSION = 'garage-v11';
 const HANZI = ['一', '二', '三', '人', '大', '小', '上', '下', '口', '中',
   '山', '水', '火', '土', '木', '日', '月', '手', '车', '门',
   '天', '地', '你', '我', '他', '白', '云', '雨', '风', '花',
@@ -35,6 +35,7 @@ const ASSETS = [
   'js/taskgen.js', 'js/rng.js', 'js/parent.js', 'js/mastery.js',
   'js/hub.js', 'js/mycar.js', 'js/album.js', 'js/vip.js',
   'js/rewards.js', 'js/rewards-data.js', 'js/game-shapes.js', 'js/game-compare.js',
+  'js/sync.js',
   'vendor/hanzi-writer.min.js',
   ...HANZI.map(c => `vendor/hanzi-data/${c}.json`),
   'audio/silence.wav',

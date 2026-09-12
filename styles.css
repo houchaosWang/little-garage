@@ -45,6 +45,8 @@ html, body { height: 100%; overflow: hidden; background: #FFF3DD; font-family: -
 #pp-io { display: flex; flex-direction: column; gap: 12px; }
 .pp-ta { width: 100%; box-sizing: border-box; height: 88px; padding: 8px 10px; border-radius: 12px;
   border: 2px solid #EDD9AC; background: #fff; color: #6B4A12; font: 13px/1.4 monospace; resize: none; }
+.pp-sync { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px; margin-top: -6px; }
+.pp-link { border: none; background: #FFE1A6; color: #6B4A12; border-radius: 10px; padding: 4px 12px; font-size: 14px; }
 
 .page-overlay { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 60; background: rgba(255,243,221,0.92); touch-action: auto; }
 .page-overlay * { touch-action: auto; }
