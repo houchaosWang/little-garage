@@ -21,7 +21,7 @@ test('各级别数量落在配置区间，架上轮胎多于目标且不超12', 
       assert.equal(t.type, 'tires');
       assert.ok(t.count >= min && t.count <= max, `L${level} count=${t.count}`);
       assert.ok(t.rackCount > t.count);
-      assert.ok(t.rackCount <= 14);
+      assert.ok(t.rackCount <= (t.mode === 'count' ? 18 : 14));
     }
   }
 });
@@ -74,19 +74,23 @@ test('轮胎L4与加油L4区间正确', () => {
   }
 });
 
-test('genMathTask 各级别运算与选项合法', () => {
+test('genMathTask 各级别运算、表征与选项合法', () => {
+  assert.equal(MAX_MATH_LEVEL, 6);
+  const MODE = { 1: 'visible', 2: 'visible', 3: 'bucket', 4: 'bucket', 5: 'bucket', 6: 'tenframe' };
   for (let level = 1; level <= MAX_MATH_LEVEL; level++) {
     for (let seed = 0; seed < 80; seed++) {
       const t = genMathTask(makeRng(seed), level);
+      assert.equal(t.mode, MODE[level]);
       assert.ok(['+', '-'].includes(t.op));
-      if (level <= 2) assert.equal(t.op, '+');
-      if (level === 3) assert.equal(t.op, '-');
+      if (level <= 3) assert.equal(t.op, '+');
+      if (level === 4) assert.equal(t.op, '-');
+      if (level === 3) assert.ok(t.a >= t.b, '刚学接着往后数：桶里放大的那个数');
       const expect = t.op === '+' ? t.a + t.b : t.a - t.b;
       assert.equal(t.answer, expect);
       assert.ok(t.a >= 1 && t.b >= 1 && t.answer >= 1);
       if (level === 1) assert.ok(t.answer <= 5);
-      else if (level >= 2 && level <= 4) assert.ok(t.answer <= 10 && t.a <= 10);
-      else if (level === 5) {
+      else if (level <= 5) assert.ok(t.answer <= 10 && t.a <= 10);
+      else {
         assert.equal(t.op, '+');
         assert.ok(t.a >= 6 && t.a <= 9 && t.b >= 2 && t.b <= 9);
         assert.ok(t.answer >= 11 && t.answer <= 18);
@@ -97,6 +101,9 @@ test('genMathTask 各级别运算与选项合法', () => {
       assert.ok(t.options.every(o => o >= 1 && o <= 20));
     }
   }
+  // 5级加法允许小数在前（练"从大的数开始数"），两种顺序都要出现
+  const l5 = Array.from({ length: 200 }, (_, s) => genMathTask(makeRng(s), 5)).filter(t => t.op === '+');
+  assert.ok(l5.some(t => t.a < t.b) && l5.some(t => t.a > t.b));
 });
 
 test('genHanziTask 选项数、池范围、答案唯一', () => {

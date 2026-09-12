@@ -1,5 +1,6 @@
 import { sfx, sayNow } from './audio.js';
 import { pulse } from './guide.js';
+import { FUEL_RATE, fuelShown, fuelOver, fuelHit } from './taskgen.js';
 
 const SVG = 'http://www.w3.org/2000/svg';
 
@@ -49,7 +50,7 @@ export function runFuelGame(garage, customer, task, attachIdleHelp) {
     });
 
     function render() {
-      const shown = Math.floor(level);
+      const shown = fuelShown(level, task.target);
       if (numEl.textContent !== String(shown)) {
         numEl.textContent = shown;
         if (shown > 0) sfx.pop();
@@ -70,8 +71,8 @@ export function runFuelGame(garage, customer, task, attachIdleHelp) {
       if (holding === null || finished) return;
       const dt = Math.min(0.1, (ts - last) / 1000);
       last = ts;
-      level += dt * 1.2;
-      if (Math.floor(level) > task.target) {
+      level += dt * FUEL_RATE;
+      if (fuelOver(level, task.target)) {
         holding = null;
         errors += 1;
         sayNow('fuel-over');
@@ -99,7 +100,7 @@ export function runFuelGame(garage, customer, task, attachIdleHelp) {
       holding = null;
       if (raf) cancelAnimationFrame(raf);
       idle.reset();
-      if (Math.floor(level) === task.target && level >= task.target) {
+      if (fuelHit(level, task.target)) {
         finish();
       } else if (level > 0) {
         sayNow('fuel-more');

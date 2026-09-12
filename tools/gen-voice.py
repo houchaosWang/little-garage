@@ -1,4 +1,7 @@
-import asyncio, os
+# 全量生成：python tools/gen-voice.py
+# 只生成指定几条：python tools/gen-voice.py 名字1 名字2
+#   （全量重生成会让所有mp3的字节都变——edge-tts输出不稳定——git会显示一大片无意义改动）
+import asyncio, os, sys
 import edge_tts
 
 VOICE = "zh-CN-XiaoxiaoNeural"
@@ -11,6 +14,8 @@ LINES = {
     "intro-dump": "你好呀！我要去工地运石头，可是我的轮胎不见啦！",
     "task-tires-prefix": "帮我装上",
     "task-tires-suffix": "个轮胎吧！",
+    "tires-done-hint": "装够了，就按绿色的勾勾哦！",
+    "idle-tires-count": "把轮胎拖进下面的框里，一个一个数，装够了就按绿色的勾勾！",
     "praise-1": "哇！太棒啦！",
     "praise-2": "谢谢你，小师傅！",
     "goodbye-1": "我出发啦！下次见！",
@@ -40,6 +45,17 @@ LINES = {
     "math-zailai": "再装上",
     "math-nazou": "拿走",
     "idle-math": "点一点下面正确的数字！",
+    # 算数重设计：从"一个一个数"引到"接着往后数""凑十"；提示分三档，不急着给答案
+    "math-think": "慢慢想，不着急！可以点一点石头，自己数一数哦。",
+    "math-again": "再想一想哦！",
+    "math-bucket-pre": "桶里有",
+    "math-xianyou": "这里有",
+    "math-ge-jiezhe": "个，接着往后数！",
+    "math-yigong": "一共是",
+    "math-bigfirst": "从大的数开始数，更快哦！",
+    "math-open": "打开桶看一看！",
+    "math-haisheng": "还剩",
+    "math-couten": "先凑成十！",
     "task-hanzi-prefix": "帮我找到",
     "task-hanzi-suffix": "字的箱子！",
     "hanzi-wrong": "再看看，这个不是哦！",
@@ -99,7 +115,13 @@ for i, ch in enumerate(CHAR_WORDS, start=1):
 
 async def main():
     os.makedirs(OUT, exist_ok=True)
+    only = set(sys.argv[1:])
+    unknown = only - set(LINES)
+    if unknown:
+        raise SystemExit(f"没有这些语音名：{sorted(unknown)}")
     for name, text in LINES.items():
+        if only and name not in only:
+            continue
         path = os.path.join(OUT, f"{name}.mp3")
         for attempt in range(1, 5):
             try:

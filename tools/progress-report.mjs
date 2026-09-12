@@ -81,7 +81,10 @@ export function renderReport(rec, history = []) {
   const save = rec.save || rec;
   const daily = (save.stats && save.stats.daily) || {};
   const days = Object.keys(daily).filter(d => (daily[d] && daily[d].jobs) > 0).sort();
-  const jobs = days.reduce((a, d) => a + daily[d].jobs, 0);
+  const dailyJobs = days.reduce((a, d) => a + daily[d].jobs, 0);
+  // "今天重新营业"会清掉当天的计数；每单来一辆车，按车数更准（实测：计数12单，实际26单）
+  const vehicleJobs = Object.values((save.stats && save.stats.byVehicle) || {}).reduce((a, n) => a + n, 0);
+  const jobs = Math.max(dailyJobs, vehicleJobs);
   const byGame = (save.stats && save.stats.byGame) || {};
   const learnPlays = Object.entries(byGame).filter(([g]) => g !== 'wash').reduce((a, [, st]) => a + st.plays, 0);
   const L = [];
@@ -91,8 +94,9 @@ export function renderReport(rec, history = []) {
     L.push(`数据收于 ${new Date(rec.receivedAt).toLocaleString('zh-CN', { hour12: false })}${rec.app ? `（iPad 上是 ${rec.app}）` : ''}`);
   }
   L.push(`玩了 ${days.length} 天，共 ${jobs} 单，学习小游戏 ${learnPlays} 局；每天设定 ${save.settings ? save.settings.dailyJobs : '?'} 单`);
+  if (vehicleJobs > dailyJobs) L.push(`（其中 ${vehicleJobs - dailyJobs} 单的日计数被"今天重新营业"清掉过，按来过的车数统计）`);
   if (days.length) {
-    L.push(`平均每个技能每天只轮到 ${(learnPlays / days.length / 8).toFixed(1)} 局（连续2局全对才升一级）`);
+    L.push(`平均每个技能每天轮到 ${(learnPlays / days.length / Object.keys(SKILLS).length).toFixed(1)} 局（连续2局全对才升一级）`);
   }
 
   L.push('', '— 各技能现在在哪 —');

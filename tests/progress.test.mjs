@@ -4,7 +4,7 @@ import { mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { parseUpload, writeProgress, summarize, localDay } from '../tools/progress-store.mjs';
-import { diagnose, renderReport } from '../tools/progress-report.mjs';
+import { diagnose, renderReport, SKILLS } from '../tools/progress-report.mjs';
 import { createStore, defaultSave, LOG_CAP } from '../js/store.js';
 import { syncLine } from '../js/parent.js';
 
@@ -155,12 +155,17 @@ test('diagnose：一半以上出错或求助 → 吃力', () => {
   assert.equal(d.find(x => x.key === 'math').tag, 'hard');
 });
 
-test('diagnose：封顶还全对 → 该加一级；抽查和金头盔题不算', () => {
-  const log = [play('tires', 4), play('tires', 4), play('tires', 4),
-    play('tires', 1, 3, 0, { review: 1 }), play('tires', 4, 5, 0, { vip: 1 })];
-  const t = diagnose(saveWithLog(log, { counting: { level: 4 } })).find(x => x.key === 'counting');
+test('diagnose：封顶还全对 → 该加一级；抽查和金头盔题不算（封顶级数随配置走，不写死）', () => {
+  const M = SKILLS.counting.max;
+  const log = [play('tires', M), play('tires', M), play('tires', M),
+    play('tires', 1, 3, 0, { review: 1 }), play('tires', M, 5, 0, { vip: 1 })];
+  const t = diagnose(saveWithLog(log, { counting: { level: M } })).find(x => x.key === 'counting');
   assert.equal(t.tag, 'ceiling');
   assert.equal(t.plays, 3);
+  // 同样全对但还没到顶 → 只是偏简单，不是封顶
+  const below = diagnose(saveWithLog([play('tires', M - 1), play('tires', M - 1), play('tires', M - 1)],
+    { counting: { level: M - 1 } })).find(x => x.key === 'counting');
+  assert.equal(below.tag, 'easy');
 });
 
 test('renderReport：没有明细的老数据也能出报告', () => {
@@ -170,7 +175,10 @@ test('renderReport：没有明细的老数据也能出报告', () => {
   save.skills.counting.level = 2;
   const text = renderReport({ receivedAt: '2026-09-12T07:00:00.000Z', app: 'garage-v11', save });
   assert.match(text, /玩了 2 天，共 8 单，学习小游戏 5 局/);
-  assert.match(text, /平均每个技能每天只轮到 0\.3 局/);
+  assert.match(text, new RegExp(`平均每个技能每天轮到 ${(5 / 2 / Object.keys(SKILLS).length).toFixed(1).replace('.', '\\.')} 局`));
+  // 被"今天重新营业"清过计数时，按车数统计
+  save.stats.byVehicle = { race: 20, fire: 6 };
+  assert.match(renderReport({ save }), /共 26 单.*\n.*18 单的日计数被"今天重新营业"清掉过/);
   assert.match(text, /数数·装轮胎\s+当前L2/);
   assert.match(text, /现有 0 条/);
   assert.match(text, /样本太少/);

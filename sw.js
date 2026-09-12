@@ -1,5 +1,5 @@
 // 每次发布内容更新必须改VERSION（如garage-v10），否则iPad拿不到新资源
-const VERSION = 'garage-v11';
+const VERSION = 'garage-v12';
 const HANZI = ['一', '二', '三', '人', '大', '小', '上', '下', '口', '中',
   '山', '水', '火', '土', '木', '日', '月', '手', '车', '门',
   '天', '地', '你', '我', '他', '白', '云', '雨', '风', '花',
@@ -7,7 +7,7 @@ const HANZI = ['一', '二', '三', '人', '大', '小', '上', '下', '口', '�
 const AUDIO_NAMES = [
   'welcome', 'intro-race', 'intro-dump', 'task-tires-prefix', 'task-tires-suffix',
   'praise-1', 'praise-2', 'goodbye-1', 'closing-1', 'closing-2', 'sleeping-1',
-  'demo-hint', 'idle-tires',
+  'demo-hint', 'idle-tires', 'tires-done-hint', 'idle-tires-count',
   'intro-police', 'intro-ambulance', 'intro-fire', 'intro-digger', 'intro-mixer', 'intro-loader',
   'hub-next', 'hub-mycar', 'hub-album', 'buddy-hello-1', 'buddy-hello-2',
   'garage-mine', 'paint-fun', 'wheel-cool', 'sticker-stick',
@@ -21,6 +21,8 @@ const AUDIO_NAMES = [
   'task-lights', 'lights-wrong', 'idle-lights', 'task-wash', 'idle-wash',
   'task-math', 'math-jia', 'math-jian', 'math-dengyu', 'math-dengyu-ji',
   'math-yiqi', 'math-wrong', 'math-duila', 'math-zailai', 'math-nazou', 'idle-math',
+  'math-think', 'math-again', 'math-bucket-pre', 'math-xianyou', 'math-ge-jiezhe',
+  'math-yigong', 'math-bigfirst', 'math-open', 'math-haisheng', 'math-couten',
   'task-hanzi-prefix', 'task-hanzi-suffix', 'hanzi-wrong', 'idle-hanzi',
   'task-trace-prefix', 'task-trace-suffix', 'trace-hint', 'trace-good', 'idle-trace',
   ...Array.from({ length: 20 }, (_, i) => `num-${i + 1}`),

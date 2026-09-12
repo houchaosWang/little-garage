@@ -41,7 +41,7 @@ const GAME_DEFS = {
     gen: (rng, lvl) => genTireTask(rng, lvl),
     run: runTireGame,
     bubble: t => `帮我装上 ${t.count} 个轮胎吧！`,
-    voice: t => ['task-tires-prefix', `num-${t.count}`, 'task-tires-suffix'],
+    voice: t => ['task-tires-prefix', `num-${t.count}`, 'task-tires-suffix', ...(t.mode === 'count' ? ['tires-done-hint'] : [])],
   },
   fuel: {
     skill: 'numerals', max: MAX_FUEL_LEVEL,
@@ -103,9 +103,12 @@ const GAME_DEFS = {
 
 const SKILL_GAME = { counting: 'tires', numerals: 'fuel', colors: 'lights', math: 'math', literacy: 'hanzi', tracing: 'trace', shapes: 'shapes', compare: 'compare' };
 
+// 每级一共有多少种不同的题：防重复只能记住比这少一个，否则会"想避也避不开"
 const SIG_SPACE = {
-  shapes: { 1: 3, 2: 4, 3: 5, 4: 35 },
-  compare: { 1: 4, 2: 6, 3: 6, 4: 16 },
+  tires: { 1: 3, 2: 4, 3: 6, 4: 5, 5: 6, 6: 8 },
+  fuel: { 1: 5, 2: 6, 3: 6, 4: 8 },
+  shapes: { 1: 3, 2: 4, 3: 5, 4: 35, 5: 126, 6: 126 },
+  compare: { 1: 4, 2: 6, 3: 6, 4: 16, 5: 20, 6: 16 },
 };
 function recentCap(key, lvl) {
   const s = SIG_SPACE[key] && SIG_SPACE[key][lvl];
@@ -195,7 +198,7 @@ const CORE_CLIPS = ['welcome',
   'intro-race', 'intro-dump', 'intro-police', 'intro-ambulance', 'intro-fire', 'intro-digger', 'intro-mixer', 'intro-loader',
   'buddy-hello-1', 'buddy-hello-2',
   'hub-next', 'hub-mycar', 'hub-album',
-  'task-tires-prefix', 'task-tires-suffix', 'task-fuel-prefix', 'task-fuel-suffix',
+  'task-tires-prefix', 'task-tires-suffix', 'tires-done-hint', 'task-fuel-prefix', 'task-fuel-suffix',
   'task-lights', 'task-wash', 'task-shapes',
   'task-compare-big', 'task-compare-small', 'task-compare-long', 'task-compare-short',
   'task-hanzi-prefix', 'task-hanzi-suffix', 'task-trace-prefix', 'task-trace-suffix',
@@ -207,7 +210,9 @@ const REST_CLIPS = [
   ...Array.from({ length: 15 }, (_, i) => `num-${i + 6}`),
   ...Array.from({ length: 40 }, (_, i) => `char-${i + 1}`),
   'praise-1', 'praise-2', 'goodbye-1', 'closing-1', 'closing-2', 'sleeping-1',
-  'idle-tires', 'demo-hint', 'fuel-over', 'fuel-more', 'idle-fuel',
+  'idle-tires', 'idle-tires-count', 'demo-hint', 'fuel-over', 'fuel-more', 'idle-fuel',
+  'math-think', 'math-again', 'math-bucket-pre', 'math-xianyou', 'math-ge-jiezhe',
+  'math-yigong', 'math-bigfirst', 'math-open', 'math-haisheng', 'math-couten',
   'lights-wrong', 'idle-lights', 'idle-wash',
   'task-math', 'math-dengyu', 'math-yiqi', 'math-wrong', 'math-duila', 'math-zailai', 'math-nazou', 'idle-math',
   'hanzi-wrong', 'idle-hanzi', 'trace-hint', 'trace-good', 'idle-trace',
@@ -285,13 +290,20 @@ async function nextJob() {
   let pool = ['tires', 'fuel', 'lights', 'math', 'hanzi', 'trace', 'shapes', 'compare'];
   if (customer.vehicle.meta.lockColor === 'skip') pool = pool.filter(g => g !== 'lights');
   if (review && !pool.includes(SKILL_GAME[review.skill])) review = null;
+  // 按"落后程度"加权抽：玩得越少越容易轮到。纯随机时实测"换车灯"26单只轮到1次，
+  // 那个技能就一直停在1级、难度引擎也无从调节。
+  const played = g => (data.stats.byGame[g] || { plays: 0 }).plays;
+  const pickBalanced = cand => {
+    const most = Math.max(...cand.map(played));
+    return rng.pickWeighted(cand, cand.map(g => 1 + most - played(g)));
+  };
   let games;
   if (review) {
     const rGame = SKILL_GAME[review.skill];
-    games = [rng.pick(pool.filter(g => g !== rGame)), rGame];
+    games = [pickBalanced(pool.filter(g => g !== rGame)), rGame];
   } else {
-    const first = rng.pick(pool);
-    games = [first, rng.pick(pool.filter(g => g !== first))];
+    const first = pickBalanced(pool);
+    games = [first, pickBalanced(pool.filter(g => g !== first))];
   }
   if (rng.next() < 0.25) games.push('wash');
 

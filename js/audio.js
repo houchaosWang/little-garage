@@ -111,7 +111,11 @@ async function speak(names, myGen) {
         new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 3000)),
       ]);
       if (myGen !== gen) return;
-      if (ctx && ctx.state !== 'running') { try { await ctx.resume(); } catch {} }
+      // iOS 被打断后 resume() 可能一直挂起到下一次触摸；算数讲解是一句句 await 的，
+      // 不能让它卡住整个游戏——最多等0.8秒，之后照常往下走（播放本身也有超时兜底）
+      if (ctx && ctx.state !== 'running') {
+        try { await Promise.race([ctx.resume(), new Promise(r => setTimeout(r, 800))]); } catch {}
+      }
       await playBuffer(buf, myGen);
     } catch { /* 缺音频不阻塞游戏 */ }
   }

@@ -18,6 +18,7 @@ function svgPoint(stage, clientX, clientY) {
 export const SHAPE_COLORS = {
   circle: '#E8493F', square: '#3E8EE0', triangle: '#66BB4C', star: '#F5B324',
   ellipse: '#8B6FE8', diamond: '#3FBFA8', trapezoid: '#E8763A',
+  rectangle: '#E86FA8', hexagon: '#A0703C',
 };
 
 // 共享形状渲染：以(0,0)为中心画出各形状，size 为特征半径；extra 可附加 stroke/style 等属性
@@ -54,6 +55,19 @@ export function shapeSvg(id, size, fill, extra = '') {
       const top = size * 0.55, bot = size * 0.95, h = size * 0.62;
       return `<polygon points="${(-top).toFixed(1)},${(-h).toFixed(1)} ${top.toFixed(1)},${(-h).toFixed(1)} ${bot.toFixed(1)},${h.toFixed(1)} ${(-bot).toFixed(1)},${h.toFixed(1)}" ${a}/>`;
     }
+    case 'rectangle': {
+      // 比正方形扁一截（约1.6:1）：一眼分得开，但得真的看一眼
+      const w = size * 2.1, h = size * 1.3;
+      return `<rect x="${(-w / 2).toFixed(1)}" y="${(-h / 2).toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="${(size * 0.14).toFixed(1)}" ${a}/>`;
+    }
+    case 'hexagon': {
+      const r = size * 1.05;
+      const pts = [0, 1, 2, 3, 4, 5].map(i => {
+        const ang = -Math.PI / 2 + (i * Math.PI) / 3;
+        return `${(r * Math.cos(ang)).toFixed(1)},${(r * Math.sin(ang)).toFixed(1)}`;
+      }).join(' ');
+      return `<polygon points="${pts}" ${a}/>`;
+    }
     default:
       return `<circle cx="0" cy="0" r="${size}" ${a}/>`;
   }
@@ -68,11 +82,13 @@ export function runShapesGame(garage, customer, task, attachIdleHelp) {
     let errors = 0;
     let helps = 0;
 
-    const panelX = 150, panelY = 270, panelW = 410, panelH = 200;
-    const holeY = panelY + panelH / 2;
     const k = task.shapes.length;
+    // 5个孔时面板往左加宽（车身从 x≈480 开始，右边不能再扩）：最宽的椭圆/长方形也不会和邻居挤在一起
+    const wide = k >= 5;
+    const panelX = wide ? 60 : 150, panelY = 270, panelW = wide ? 510 : 410, panelH = 200;
+    const holeY = panelY + panelH / 2;
     const gap = panelW / k;
-    const holeR = Math.min(38, gap * 0.42);
+    const holeR = Math.min(38, gap * (wide ? 0.38 : 0.42));
     const partR = holeR * 0.82;
     const hitR = Math.min(72, gap * 0.85);
     const trayY = 720;
@@ -94,11 +110,14 @@ export function runShapesGame(garage, customer, task, attachIdleHelp) {
       holes.push(g);
     });
 
+    // 零件结构：外层 translate（拖动）> part-inner（CSS 弹一下）> part-rot（SVG 属性旋转）。
+    // 旋转放在最里层的属性上：CSS 动画只作用于 part-inner，不会把旋转冲掉。
     const parts = [];
     task.tray.forEach((shape, i) => {
       const cx = panelX + gap * (i + 0.5);
+      const rot = task.rotations ? task.rotations[i] : 0;
       const g = el('g', { class: 'shape-part', transform: `translate(${cx} ${trayY})` },
-        `<g class="part-inner">${shapeSvg(shape, partR, SHAPE_COLORS[shape])}</g>`);
+        `<g class="part-inner"><g class="part-rot" transform="rotate(${rot})">${shapeSvg(shape, partR, SHAPE_COLORS[shape])}</g></g>`);
       g.dataset.shape = shape;
       g.dataset.home = `${cx},${trayY}`;
       const inner = g.querySelector('.part-inner');
@@ -152,6 +171,7 @@ export function runShapesGame(garage, customer, task, attachIdleHelp) {
         near.dataset.filled = '1';
         g.dataset.placed = '1';
         g.setAttribute('transform', `translate(${near.dataset.cx} ${holeY})`);
+        g.querySelector('.part-rot').setAttribute('transform', 'rotate(0)'); // 装进孔里就摆正
         g.querySelector('.part-inner').style.animation = 'pop 0.35s ease-out';
         const body = near.querySelector('.shape-body');
         body.setAttribute('fill', SHAPE_COLORS[g.dataset.shape]);
