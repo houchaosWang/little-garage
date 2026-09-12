@@ -1,0 +1,4 @@
+# 批处理必须 CRLF：cmd.exe 对纯LF的 ( ... ) 块和 goto 解析不可靠。
+# 另外 .cmd 内容必须保持纯ASCII——见 启动维修站服务器.cmd 顶部注释。
+*.cmd text eol=crlf
+*.bat text eol=crlf
