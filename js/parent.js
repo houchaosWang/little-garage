@@ -10,6 +10,7 @@ export const STATE_INFO = {
 export const GAME_NAMES = {
   tires: '装轮胎', fuel: '加油', lights: '换车灯', wash: '洗车', math: '石头算数', hanzi: '认字搬箱', trace: '描字', shapes: '形状对孔', compare: '比大小',
   subitize: '闪灯看数', pattern: '找规律', numline: '数字赛道', story: '停车场故事', sort: '零件分拣', spatial: '方位摆放',
+  syllable: '车名拍拍',
 };
 
 export function levelState(skill, n) {

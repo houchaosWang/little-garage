@@ -9,6 +9,7 @@ import {
   MAX_TIRE_LEVEL, MAX_FUEL_LEVEL, MAX_LIGHTS_LEVEL, MAX_MATH_LEVEL,
   MAX_HANZI_LEVEL, MAX_TRACE_LEVEL, MAX_SHAPES_LEVEL, MAX_COMPARE_LEVEL,
   MAX_SUBITIZE_LEVEL, MAX_PATTERN_LEVEL, MAX_NUMLINE_LEVEL, MAX_STORY_LEVEL, MAX_SORT_LEVEL, MAX_SPATIAL_LEVEL,
+  MAX_SYLLABLE_LEVEL,
 } from '../js/taskgen.js';
 
 export const SKILLS = {
@@ -26,6 +27,7 @@ export const SKILLS = {
   story: { name: '应用·停车场', game: 'story', max: MAX_STORY_LEVEL },
   sort: { name: '分类·分拣', game: 'sort', max: MAX_SORT_LEVEL },
   spatial: { name: '方位·摆放', game: 'spatial', max: MAX_SPATIAL_LEVEL },
+  syllable: { name: '音节·车名', game: 'syllable', max: MAX_SYLLABLE_LEVEL },
 };
 
 export const VERDICT = {

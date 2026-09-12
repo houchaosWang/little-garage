@@ -226,6 +226,59 @@ CHAR_WORDS = "一二三人大小上下口中山水火土木日月手车门天地
 for i, ch in enumerate(CHAR_WORDS, start=1):
     LINES[f"char-{i}"] = ch
 
+# 车名拍拍：单音节（指着念、拍读、删除后剩下的部分逐个念）。键=拼音声调，与 js/taskgen.js 的 SYL_WORDS 一致。
+# 多音字/单念易读错的字，用同音、没有歧义的字生成：斗→抖、垃→拉、圾→机、淇→棋、淋→林（画面上仍显示原字）
+SYLLABLES = {
+    "jing3": "警", "che1": "车", "sai4": "赛", "chan3": "铲", "huo3": "火", "diao4": "吊", "qi4": "汽",
+    "jiu4": "救", "hu4": "护", "xiao1": "消", "fang2": "防", "fan1": "翻", "dou3": "抖", "wa1": "挖",
+    "jue2": "掘", "ji1": "机", "jiao3": "搅", "ban4": "拌", "sa3": "洒", "shui3": "水", "la1": "拉",
+    "gong1": "公", "jiao1": "交", "chu1": "出", "zu1": "租", "mo2": "摩", "tuo1": "托", "gong4": "共",
+    "dian4": "电", "dong4": "动", "bing1": "冰", "qi2": "棋", "lin2": "林", "shuang1": "双", "ceng2": "层",
+    "ba1": "巴", "shi4": "士", "deng1": "灯", "lun2": "轮", "men2": "门", "chuang1": "窗", "ding3": "顶", "pai2": "牌",
+}
+for key, ch in SYLLABLES.items():
+    LINES[f"syl-{key}"] = ch
+# 整词（自然语调，出题时念）
+VEHICLE_WORDS = {
+    "jingche": "警车", "saiche": "赛车", "chanche": "铲车", "huoche": "火车", "diaoche": "吊车", "qiche": "汽车",
+    "jiuhuche": "救护车", "xiaofangche": "消防车", "fandouche": "翻斗车", "wajueji": "挖掘机", "jiaobanche": "搅拌车",
+    "sashuiche": "洒水车", "lajiche": "垃圾车", "gongjiaoche": "公交车", "chuzuche": "出租车", "motuoche": "摩托车",
+    "gonggongqiche": "公共汽车", "diandongqiche": "电动汽车", "bingqilinche": "冰淇淋车", "shuangcengbashi": "双层巴士",
+    "chedeng": "车灯", "chelun": "车轮", "chemen": "车门", "chechuang": "车窗", "cheding": "车顶", "chepai": "车牌",
+}
+for key, w in VEHICLE_WORDS.items():
+    LINES[f"vn-{key}"] = w
+LINES.update({
+    "task-syl-clap": "跟我拍车名！说一个字，拍一下鼓！",
+    "task-syl-sign": "听车名，找牌子！",
+    "task-syl-point": "我指着念，你听好哦！",
+    "task-syl-del": "不说一个字，还剩什么？",
+    "task-syl-head": "是车的，开进停车位；车上的东西，放进零件箱！",
+    "sy-this": "这辆车叫",
+    "sy-clap-go": "说一个字，拍一下鼓！",
+    "sy-xia": "下！",
+    "sy-together": "看我拍：",
+    "sy-yourturn": "该你啦！",
+    "sy-rule": "一个字，念一个音！",
+    "sy-count": "数一数，它有几个音？",
+    "sy-find": "哪块牌子写着",
+    "sy-which": "哪个字念",
+    "sy-bushuo": "不说",
+    "sy-shengsha": "还剩什么？",
+    "sy-shengxia": "剩下的是",
+    "sy-listen": "听一听，是哪一个？",
+    "sy-idle-clap": "跟着说车名，说一个字，就拍一下鼓！",
+    "sy-point-again": "我们再指着念一遍！",
+    "sy-see": "写出来看看！",
+    "sy-head-car": "车字在后面，它就是车！",
+    "sy-head-part": "车字在前面，是车上的东西！",
+    "sy-head-rule": "车字在后面，说的是车；车字在前面，说的是车上的东西。",
+    "sy-good": "对啦！",
+    "sy-clap-good": "拍对啦！",
+    "sy-wrong": "咦，再想一想！",
+    "sy-done": "你真会听字音！",
+})
+
 async def main():
     os.makedirs(OUT, exist_ok=True)
     only = set(sys.argv[1:])

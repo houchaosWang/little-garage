@@ -1,9 +1,16 @@
 // 每次发布内容更新必须改VERSION（如garage-v10），否则iPad拿不到新资源
-const VERSION = 'garage-v13';
+const VERSION = 'garage-v14';
 const HANZI = ['一', '二', '三', '人', '大', '小', '上', '下', '口', '中',
   '山', '水', '火', '土', '木', '日', '月', '手', '车', '门',
   '天', '地', '你', '我', '他', '白', '云', '雨', '风', '花',
   '草', '虫', '鸟', '牛', '羊', '马', '鱼', '米', '田', '电'];
+// 车名拍拍：单音节 syl-拼音声调、整词 vn-*，与 js/taskgen.js 的 SYL_WORDS 一一对应（tests/syllable.test.mjs 会查）
+const SYL_KEYS = ['jing3', 'che1', 'sai4', 'chan3', 'huo3', 'diao4', 'qi4', 'jiu4', 'hu4', 'xiao1', 'fang2', 'fan1', 'dou3',
+  'wa1', 'jue2', 'ji1', 'jiao3', 'ban4', 'sa3', 'shui3', 'la1', 'gong1', 'jiao1', 'chu1', 'zu1', 'mo2', 'tuo1', 'gong4',
+  'dian4', 'dong4', 'bing1', 'qi2', 'lin2', 'shuang1', 'ceng2', 'ba1', 'shi4', 'deng1', 'lun2', 'men2', 'chuang1', 'ding3', 'pai2'];
+const VN_KEYS = ['jingche', 'saiche', 'chanche', 'huoche', 'diaoche', 'qiche', 'jiuhuche', 'xiaofangche', 'fandouche',
+  'wajueji', 'jiaobanche', 'sashuiche', 'lajiche', 'gongjiaoche', 'chuzuche', 'motuoche', 'gonggongqiche',
+  'diandongqiche', 'bingqilinche', 'shuangcengbashi', 'chedeng', 'chelun', 'chemen', 'chechuang', 'cheding', 'chepai'];
 const AUDIO_NAMES = [
   'welcome', 'intro-race', 'intro-dump', 'task-tires-prefix', 'task-tires-suffix',
   'praise-1', 'praise-2', 'goodbye-1', 'closing-1', 'closing-2', 'sleeping-1',
@@ -40,6 +47,12 @@ const AUDIO_NAMES = [
   'task-sp', 'task-sp-map', 'sp-ba', 'sp-fangdao', 'sp-first', 'sp-then', 'obj-wrench', 'obj-tire', 'obj-can',
   'obj-flag', 'ref-car', 'ref-box', 'pos-up', 'pos-down', 'pos-in', 'pos-out', 'pos-side', 'pos-front', 'pos-back',
   'pos-left', 'pos-right', 'sp-wrong', 'sp-good', 'sp-idle', 'sp-front-hint', 'sp-left-hint', 'sp-right-hint',
+  'task-syl-clap', 'task-syl-sign', 'task-syl-point', 'task-syl-del', 'task-syl-head',
+  'sy-this', 'sy-clap-go', 'sy-xia', 'sy-together', 'sy-yourturn', 'sy-rule', 'sy-count', 'sy-find', 'sy-which',
+  'sy-bushuo', 'sy-shengsha', 'sy-shengxia', 'sy-listen', 'sy-idle-clap', 'sy-point-again', 'sy-see',
+  'sy-head-car', 'sy-head-part', 'sy-head-rule', 'sy-good', 'sy-clap-good', 'sy-wrong', 'sy-done',
+  ...SYL_KEYS.map(k => `syl-${k}`),
+  ...VN_KEYS.map(k => `vn-${k}`),
   ...Array.from({ length: 20 }, (_, i) => `num-${i + 1}`),
   ...Array.from({ length: 40 }, (_, i) => `char-${i + 1}`),
 ];
@@ -53,7 +66,7 @@ const ASSETS = [
   'js/hub.js', 'js/mycar.js', 'js/album.js', 'js/vip.js',
   'js/rewards.js', 'js/rewards-data.js', 'js/game-shapes.js', 'js/game-compare.js',
   'js/sync.js', 'js/game-subitize.js', 'js/game-pattern.js', 'js/game-numline.js', 'js/game-story.js',
-  'js/game-sort.js', 'js/game-spatial.js',
+  'js/game-sort.js', 'js/game-spatial.js', 'js/game-syllable.js',
   'vendor/hanzi-writer.min.js',
   ...HANZI.map(c => `vendor/hanzi-data/${c}.json`),
   'audio/silence.wav',

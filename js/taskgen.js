@@ -534,8 +534,112 @@ export function genSpatialTask(rng, level) {
   return { type: 'spatial', scene: cfg.scene, map: !!cfg.map, rounds };
 }
 
+// ── 车名拍拍（音节意识 → 一字一音 → 音节删除 → 语素） ──
+// 依据（原文/摘要已核对，详见 docs/phase6-design-rationale.md 第七节）：Pan 等 2016 八年追踪——4-6岁的音节意识
+// 独特预测后来的语素意识和11岁的汉字读写；McBride-Chang 等 2003——语素意识独特预测幼儿识字；
+// 音节删除用 Shu 等 2008 的做法（双音节词去掉第一个或第二个音节）；Anthony 等 2003——同一单位里"删除"最难，
+// 所以先拍（切分）、再对字、最后才删。指南5-6岁"知道文字表示一定的意义"，教育建议"使幼儿知道说的话可以用文字记录下来"。
+// s：每个字一个音节语音 syl-拼音声调（多音字用同音无歧义字生成，见 gen-voice.py）；v：整词语音 vn-*（自然语调）。
+export const SYL_WORDS = [
+  { w: '警车', s: ['jing3', 'che1'], v: 'jingche', pic: 'police' },
+  { w: '赛车', s: ['sai4', 'che1'], v: 'saiche', pic: 'race' },
+  { w: '铲车', s: ['chan3', 'che1'], v: 'chanche', pic: 'loader' },
+  { w: '火车', s: ['huo3', 'che1'], v: 'huoche' },
+  { w: '吊车', s: ['diao4', 'che1'], v: 'diaoche' },
+  { w: '汽车', s: ['qi4', 'che1'], v: 'qiche' },
+  { w: '救护车', s: ['jiu4', 'hu4', 'che1'], v: 'jiuhuche', pic: 'ambulance' },
+  { w: '消防车', s: ['xiao1', 'fang2', 'che1'], v: 'xiaofangche', pic: 'fire' },
+  { w: '翻斗车', s: ['fan1', 'dou3', 'che1'], v: 'fandouche', pic: 'dump' },
+  { w: '挖掘机', s: ['wa1', 'jue2', 'ji1'], v: 'wajueji', pic: 'digger' },
+  { w: '搅拌车', s: ['jiao3', 'ban4', 'che1'], v: 'jiaobanche', pic: 'mixer' },
+  { w: '洒水车', s: ['sa3', 'shui3', 'che1'], v: 'sashuiche' },
+  { w: '垃圾车', s: ['la1', 'ji1', 'che1'], v: 'lajiche' },
+  { w: '公交车', s: ['gong1', 'jiao1', 'che1'], v: 'gongjiaoche' },
+  { w: '出租车', s: ['chu1', 'zu1', 'che1'], v: 'chuzuche' },
+  { w: '摩托车', s: ['mo2', 'tuo1', 'che1'], v: 'motuoche' },
+  { w: '公共汽车', s: ['gong1', 'gong4', 'qi4', 'che1'], v: 'gonggongqiche' },
+  { w: '电动汽车', s: ['dian4', 'dong4', 'qi4', 'che1'], v: 'diandongqiche' },
+  { w: '冰淇淋车', s: ['bing1', 'qi2', 'lin2', 'che1'], v: 'bingqilinche' },
+  { w: '双层巴士', s: ['shuang1', 'ceng2', 'ba1', 'shi4'], v: 'shuangcengbashi' },
+  // 车字在前：车上的东西（第6级）
+  { w: '车灯', s: ['che1', 'deng1'], v: 'chedeng', part: true },
+  { w: '车轮', s: ['che1', 'lun2'], v: 'chelun', part: true },
+  { w: '车门', s: ['che1', 'men2'], v: 'chemen', part: true },
+  { w: '车窗', s: ['che1', 'chuang1'], v: 'chechuang', part: true },
+  { w: '车顶', s: ['che1', 'ding3'], v: 'cheding', part: true },
+  { w: '车牌', s: ['che1', 'pai2'], v: 'chepai', part: true },
+];
+export const sylWord = w => SYL_WORDS.find(x => x.w === w);
+
+export const SYLLABLE_LEVELS = {
+  1: { kind: 'clap' }, // 拍车名：8种车（有图），2个字、3个字都练到
+  2: { kind: 'sign' }, // 找牌子：三块牌子2/3/4个字——几个音就是几个字
+  3: { kind: 'point' }, // 指着念：问"'防'是哪个字"，两轮3个字、最后一轮4个字
+  4: { kind: 'del', where: 'edge' }, // 去头去尾：一轮两个字（Shu 2008 格式）+两轮三个字
+  5: { kind: 'del', where: 'mid' }, // 去中间：两轮中间（要同时记住两头）+一轮头尾
+  6: { kind: 'head' }, // 是不是车：3个"X车"+3个"车X"，车字在后是车、在前是车上的东西
+};
+export const MAX_SYLLABLE_LEVEL = 6;
+
+// 删除题的三个选项（都是音节下标序列，念出来给他听）：正确的剩余、被去掉的那个字、删错了位置（两个字时是整词没删）
+export function deletionOptions(rng, word, drop) {
+  const n = word.s.length;
+  const all = [...Array(n).keys()];
+  const rest = d => all.filter(i => i !== d);
+  const correct = rest(drop);
+  const other = n === 2 ? all : rest(drop === 0 ? n - 1 : 0);
+  const options = rng.shuffle([correct, [drop], other]);
+  return { options, answer: options.indexOf(correct) };
+}
+
+export function genSyllableTask(rng, level) {
+  const l = Math.max(1, Math.min(Math.floor(level), MAX_SYLLABLE_LEVEL));
+  const cfg = SYLLABLE_LEVELS[l];
+  const vehicles = SYL_WORDS.filter(x => !x.part);
+  const byLen = n => vehicles.filter(x => x.s.length === n);
+  if (cfg.kind === 'clap') {
+    const pics = vehicles.filter(x => x.pic);
+    const two = rng.pick(pics.filter(x => x.s.length === 2));
+    const three = rng.pick(pics.filter(x => x.s.length === 3));
+    const third = rng.pick(pics.filter(x => x !== two && x !== three));
+    return { type: 'syllable', kind: 'clap', rounds: rng.shuffle([two, three, third]).map(x => ({ word: x.w })) };
+  }
+  if (cfg.kind === 'sign') {
+    // 每轮三块牌子正好2、3、4个字；三轮的目标长度各不相同。牌子几乎都以"车"结尾，认得"车"也帮不上忙
+    const rounds = rng.shuffle([2, 3, 4]).map(n => {
+      const signs = [2, 3, 4].map(k => rng.pick(byLen(k)).w);
+      return { word: signs[n - 2], signs: rng.shuffle(signs) };
+    });
+    return { type: 'syllable', kind: 'sign', rounds };
+  }
+  if (cfg.kind === 'point') {
+    // 从不问他已经认得的字（车、水、电……）：认出字形就能答，练不到"第几个音=第几个字"
+    const picks = [...rng.shuffle(byLen(3)).slice(0, 2), rng.pick(byLen(4))];
+    const rounds = picks.map(x => {
+      const idxs = [...x.w].map((_, i) => i).filter(i => !CHARSET.includes(x.w[i]));
+      return { word: x.w, ask: rng.pick(idxs) };
+    });
+    return { type: 'syllable', kind: 'point', rounds };
+  }
+  if (cfg.kind === 'del') {
+    const picks = cfg.where === 'edge'
+      ? [rng.pick(byLen(2)), ...rng.shuffle(byLen(3)).slice(0, 2)]
+      : rng.shuffle(byLen(3)).slice(0, 3);
+    const rounds = picks.map((x, r) => {
+      const n = x.s.length;
+      const drop = cfg.where === 'mid' && r < 2 ? 1 : rng.pick([0, n - 1]);
+      return { word: x.w, drop, ...deletionOptions(rng, x, drop) };
+    });
+    return { type: 'syllable', kind: 'del', where: cfg.where, rounds: rng.shuffle(rounds) };
+  }
+  const cars = rng.shuffle(vehicles.filter(x => x.w.endsWith('车') && x.w.length <= 3)).slice(0, 3);
+  const parts = rng.shuffle(SYL_WORDS.filter(x => x.part)).slice(0, 3);
+  return { type: 'syllable', kind: 'head', items: rng.shuffle([...cars, ...parts]).map(x => ({ word: x.w, car: !x.part })) };
+}
+
 export function taskSignature(key, task) {
   switch (key) {
+    case 'syllable': return `y-${task.kind}-${(task.rounds || task.items).map(r => r.word + (r.ask ?? r.drop ?? '')).join('.')}`;
     case 'spatial': return `z-${task.scene}-${task.rounds.map(r => r.map(s => s.obj[0] + s.word).join('+')).join('.')}`;
     case 'sort': return `o-${task.kind}-${task.rule || ''}-${task.items.map(i => `${i.color[0]}${i.shape[0]}${i.bin}`).join('.')}`;
     case 'story': return `s-${task.kind}-${task.x}${task.op}${task.y}`;

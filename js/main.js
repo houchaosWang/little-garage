@@ -20,6 +20,7 @@ import {
   genStoryTask, MAX_STORY_LEVEL,
   genSortTask, MAX_SORT_LEVEL,
   genSpatialTask, MAX_SPATIAL_LEVEL,
+  genSyllableTask, MAX_SYLLABLE_LEVEL, SYL_WORDS,
   CHARSET,
   taskSignature,
 } from './taskgen.js';
@@ -38,6 +39,7 @@ import { runNumlineGame } from './game-numline.js';
 import { runStoryGame } from './game-story.js';
 import { runSortGame } from './game-sort.js';
 import { runSpatialGame } from './game-spatial.js';
+import { runSyllableGame, SYL_PROMPTS } from './game-syllable.js';
 import { attachIdleHelp, guideHand } from './guide.js';
 import { initParentPanel } from './parent.js';
 import { PALETTE, addWheels } from './vehicles.js';
@@ -154,11 +156,20 @@ const GAME_DEFS = {
     bubble: t => (t.map ? '照着小图摆一摆！' : '放到对的地方！'),
     voice: t => [t.map ? 'task-sp-map' : 'task-sp'],
   },
+  // 阶段7：车名拍拍（依据见 docs/phase6-design-rationale.md 第七节与 taskgen.js 的 SYL_WORDS 注释）
+  syllable: {
+    skill: 'syllable', max: MAX_SYLLABLE_LEVEL,
+    gen: (rng, lvl) => genSyllableTask(rng, lvl),
+    run: runSyllableGame,
+    bubble: t => ({ clap: '跟我拍车名！', sign: '听车名，找牌子！', point: '指着念一念！', del: '不说一个字，还剩什么？', head: '是车，还是车上的东西？' })[t.kind],
+    voice: t => [({ clap: 'task-syl-clap', sign: 'task-syl-sign', point: 'task-syl-point', del: 'task-syl-del', head: 'task-syl-head' })[t.kind]],
+  },
 };
 
 const SKILL_GAME = {
   counting: 'tires', numerals: 'fuel', colors: 'lights', math: 'math', literacy: 'hanzi', tracing: 'trace', shapes: 'shapes', compare: 'compare',
   subitize: 'subitize', pattern: 'pattern', numline: 'numline', story: 'story', sort: 'sort', spatial: 'spatial',
+  syllable: 'syllable',
 };
 
 // 每级一共有多少种不同的题：防重复只能记住比这少一个，否则会"想避也避不开"
@@ -234,6 +245,7 @@ initParentPanel(store, () => data, {
   story: { name: '应用·停车场', max: MAX_STORY_LEVEL },
   sort: { name: '分类·分拣', max: MAX_SORT_LEVEL },
   spatial: { name: '方位·摆放', max: MAX_SPATIAL_LEVEL },
+  syllable: { name: '音节·车名', max: MAX_SYLLABLE_LEVEL },
 }, { sync });
 
 window.addEventListener('unhandledrejection', e => console.error('unhandled', e.reason));
@@ -276,7 +288,8 @@ const CORE_CLIPS = ['welcome',
   'task-pat-next', 'task-pat-mid', 'task-pat-same', 'task-pat-unit',
   'task-nl-race', 'task-nl-predict', 'task-nl-est', 'task-nl-left',
   'task-story', 'task-sort-color', 'task-sort-shape', 'task-sort-switch', 'task-sort-border', 'task-sort-guess', 'task-sort-both',
-  'task-sp', 'task-sp-map'];
+  'task-sp', 'task-sp-map',
+  'task-syl-clap', 'task-syl-sign', 'task-syl-point', 'task-syl-del', 'task-syl-head'];
 const REST_CLIPS = [
   ...Array.from({ length: 15 }, (_, i) => `num-${i + 6}`),
   ...Array.from({ length: 40 }, (_, i) => `char-${i + 1}`),
@@ -305,6 +318,9 @@ const REST_CLIPS = [
   'sp-ba', 'sp-fangdao', 'sp-first', 'sp-then', 'obj-wrench', 'obj-tire', 'obj-can', 'obj-flag', 'ref-car', 'ref-box',
   'pos-up', 'pos-down', 'pos-in', 'pos-out', 'pos-side', 'pos-front', 'pos-back', 'pos-left', 'pos-right',
   'sp-wrong', 'sp-good', 'sp-idle', 'sp-front-hint', 'sp-left-hint', 'sp-right-hint',
+  ...SYL_PROMPTS,
+  ...new Set(SYL_WORDS.flatMap(x => x.s.map(k => `syl-${k}`))),
+  ...SYL_WORDS.map(x => `vn-${x.v}`),
 ];
 preload(CORE_CLIPS, (done, total) => {
   bootHint.textContent = `正在准备声音 ${done}/${total}`;
@@ -372,7 +388,7 @@ async function nextJob() {
   }
 
   let pool = ['tires', 'fuel', 'lights', 'math', 'hanzi', 'trace', 'shapes', 'compare',
-    'subitize', 'pattern', 'numline', 'story', 'sort', 'spatial'];
+    'subitize', 'pattern', 'numline', 'story', 'sort', 'spatial', 'syllable'];
   if (customer.vehicle.meta.lockColor === 'skip') pool = pool.filter(g => g !== 'lights');
   if (review && !pool.includes(SKILL_GAME[review.skill])) review = null;
   // 按"落后程度"加权抽：玩得越少越容易轮到。纯随机时实测"换车灯"26单只轮到1次，

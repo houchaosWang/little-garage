@@ -31,7 +31,7 @@ test('代码里念到的每条语音都在离线清单里（防名字拼错—�
 test('main.js 里的任务语音和预加载清单里每个名字都存在', () => {
   const src = read('../js/main.js');
   // 语音名都带连字符（welcome 除外）；不带连字符的 'math' 'tires' 'sticker' 是游戏键/掉落种类，不是语音
-  const prefix = /^(?:(?:task|sub|pat|col|shp|nl|st|sort|sp|obj|ref|pos|math|intro|hub|buddy|friend|vip|praise|goodbye|closing|sleeping|idle|demo|fuel|lights|hanzi|trace|shapes|compare|tires|paint|wheel|sticker|badge|album|garage)-|welcome$)/;
+  const prefix = /^(?:(?:task|sub|pat|col|shp|nl|st|sort|sp|obj|ref|pos|sy|syl|vn|math|intro|hub|buddy|friend|vip|praise|goodbye|closing|sleeping|idle|demo|fuel|lights|hanzi|trace|shapes|compare|tires|paint|wheel|sticker|badge|album|garage)-|welcome$)/;
   const missing = [...src.matchAll(/'([a-z][a-z0-9-]*)'/g)].map(m => m[1])
     .filter(n => prefix.test(n) && !CLIPS.has(n));
   assert.deepEqual([...new Set(missing)], []);

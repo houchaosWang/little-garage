@@ -19,6 +19,7 @@ export function defaultSave() {
       // 阶段6：旧存档读出来时由 mergeDefaults 自动补上，从1级起步
       subitize: skill(), pattern: skill(), numline: skill(),
       story: skill(), sort: skill(), spatial: skill(),
+      syllable: skill(), // 阶段7：车名拍拍
     },
     stats: { daily: {}, byGame: {}, byVehicle: {}, log: [] },
     settings: { dailyJobs: 4 },
