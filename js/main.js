@@ -378,6 +378,17 @@ function showSleeping() {
   window.addEventListener('pageshow', recheck);
 }
 
-if ('serviceWorker' in navigator && location.protocol === 'https:') {
-  navigator.serviceWorker.register('sw.js').catch(() => {});
+// 本地 http 默认不注册 SW（免得缓存干扰调试）。
+// ?sw=1 在电脑上自检离线安装是否完整；?sw=0 撤销（别把缓存留在 localhost:8080 上妨碍别的项目）。
+if ('serviceWorker' in navigator) {
+  const flag = new URLSearchParams(location.search).get('sw');
+  if (flag === '0') {
+    navigator.serviceWorker.getRegistrations()
+      .then(rs => Promise.all(rs.map(r => r.unregister())))
+      .then(() => caches.keys())
+      .then(ks => Promise.all(ks.map(k => caches.delete(k))))
+      .catch(() => {});
+  } else if (location.protocol === 'https:' || flag !== null) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
 }

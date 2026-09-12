@@ -130,3 +130,41 @@ test('旧档自动补全新技能字段且不动旧进度', () => {
   assert.equal(d.vipMeter, 0);
   assert.equal(d.vipTarget, 0);
 });
+
+test('存档搬家：导出再导入，进度一字不差', () => {
+  const st = fakeStorage();
+  const s = createStore(st, () => '2026-09-12');
+  const d = s.load();
+  d.skills.math.level = 3.5;
+  d.skills.counting.mastery = { 2: { state: 'solid', due: '2026-10-01', box: 3, passes: 2 } };
+  d.collection.stickers = ['s3', 's7'];
+  d.collection.carConfig = { paint: 'blue', wheel: 'w3', placed: [{ id: 's3', x: 12, y: 34 }] };
+  d.stats.byGame.tires = { plays: 9, helps: 1, errors: 2 };
+  s.save(d);
+
+  const blob = s.exportSave(s.load());
+  // 新地址 = 新的 localStorage，用一个全新的空存储模拟
+  const fresh = createStore(fakeStorage(), () => '2026-09-12');
+  assert.equal(fresh.load().skills.math.level, 1);
+  const back = fresh.importSave(blob);
+  assert.equal(back.skills.math.level, 3.5);
+  assert.deepEqual(back.skills.counting.mastery['2'].state, 'solid');
+  assert.deepEqual(back.collection.stickers, ['s3', 's7']);
+  assert.deepEqual(back.collection.carConfig.placed, [{ id: 's3', x: 12, y: 34 }]);
+  assert.deepEqual(back.stats.byGame.tires, { plays: 9, helps: 1, errors: 2 });
+  assert.deepEqual(fresh.load(), back);
+});
+
+test('存档搬家：旧档缺字段照样补齐，垃圾输入不会覆盖进度', () => {
+  const st = fakeStorage();
+  const s = createStore(st, () => '2026-09-12');
+  const old = s.importSave(JSON.stringify({ version: 1, skills: { counting: { level: 2 } } }));
+  assert.equal(old.skills.compare.level, 1);
+  assert.deepEqual(old.collection.paints, ['red']);
+
+  for (const junk of ['', '不是json', '{}', '[]', 'null', JSON.stringify({ version: 2, skills: {} }),
+    JSON.stringify({ version: 1 }), JSON.stringify({ version: 1, skills: 'x' })]) {
+    assert.throws(() => s.importSave(junk), undefined, `应拒绝：${junk}`);
+  }
+  assert.equal(s.load().skills.counting.level, 2);
+});

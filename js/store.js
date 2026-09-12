@@ -81,5 +81,23 @@ export function createStore(storage, todayFn = localDate) {
   function wipe() {
     try { storage.removeItem(KEY); } catch {}
   }
-  return { load, save, jobsToday, recordJob, recordGame, reopenToday, wipe };
+  // 换地址就等于换了一个"网站"（github.io → 局域网IP），localStorage 不跟着搬。
+  // 所以留一条纯文本的搬家/备份通道，家长手动复制粘贴即可，数据依然不出iPad。
+  function exportSave(data = load()) {
+    return JSON.stringify(data);
+  }
+  function importSave(raw) {
+    let d = null;
+    try { d = JSON.parse(String(raw).trim()); } catch { d = null; }
+    if (!d || typeof d !== 'object' || d.version !== 1 || !d.skills || typeof d.skills !== 'object') {
+      throw new Error('这段文字不是维修站的存档');
+    }
+    const merged = mergeDefaults(defaultSave(), d);
+    save(merged);
+    let stored = null;
+    try { stored = storage.getItem(KEY); } catch { stored = null; }
+    if (!stored) throw new Error('写入失败，可能是存储空间满了');
+    return merged;
+  }
+  return { load, save, jobsToday, recordJob, recordGame, reopenToday, wipe, exportSave, importSave };
 }

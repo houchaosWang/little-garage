@@ -96,6 +96,15 @@ export function initParentPanel(store, getData, skillMeta) {
         ${mapHtml}
         ${statHtml}
         <button type="button" class="pp-wide" data-act="export">导出报告（分享/复制）</button>
+        <button type="button" class="pp-wide" data-act="io">存档备份 / 搬家</button>
+        <div id="pp-io" hidden>
+          <p class="pp-sec">备份：复制走下面这段</p>
+          <textarea class="pp-ta" id="pp-out" readonly></textarea>
+          <button type="button" class="pp-wide" data-act="io-copy">复制存档</button>
+          <p class="pp-sec">恢复：把备份粘贴进来</p>
+          <textarea class="pp-ta" id="pp-in" placeholder="在这里长按 → 粘贴"></textarea>
+          <button type="button" class="pp-wide pp-danger" data-act="io-import">导入并覆盖当前进度</button>
+        </div>
         <button type="button" class="pp-wide" data-act="reopen">今天重新营业</button>
         <button type="button" class="pp-wide pp-danger" data-act="wipe">清空全部进度</button>
         <button type="button" class="pp-wide" data-act="close">关闭</button>
@@ -105,7 +114,9 @@ export function initParentPanel(store, getData, skillMeta) {
     const estEl = wrap.querySelector('#pp-est');
     const renderEst = () => { estEl.textContent = `大约每天 ${data.settings.dailyJobs * 4} 分钟`; };
     renderEst();
+    const ioBox = wrap.querySelector('#pp-io');
     let wipeArmed = false;
+    let importArmed = false;
     wrap.addEventListener('click', e => {
       const act = e.target.dataset && e.target.dataset.act;
       if (!act) return;
@@ -129,6 +140,40 @@ export function initParentPanel(store, getData, skillMeta) {
         };
         if (navigator.share) navigator.share({ text }).catch(fallback);
         else fallback();
+      } else if (act === 'io') {
+        const open = ioBox.hidden;
+        ioBox.hidden = !open;
+        if (open) wrap.querySelector('#pp-out').value = store.exportSave(getData());
+      } else if (act === 'io-copy') {
+        const text = wrap.querySelector('#pp-out').value;
+        const btn = e.target;
+        const fallback = () => {
+          const p = navigator.clipboard && navigator.clipboard.writeText
+            ? navigator.clipboard.writeText(text) : Promise.reject(new Error('no-clipboard'));
+          p.then(() => { btn.textContent = '已复制，粘贴到备忘录/微信存好'; })
+            .catch(() => {
+              wrap.querySelector('#pp-out').select();
+              btn.textContent = '已全选，请手动长按复制';
+            });
+        };
+        if (navigator.share) navigator.share({ text }).catch(fallback);
+        else fallback();
+      } else if (act === 'io-import') {
+        const btn = e.target;
+        const raw = wrap.querySelector('#pp-in').value;
+        if (!raw.trim()) { btn.textContent = '先把备份粘贴到上面的框里'; return; }
+        if (!importArmed) {
+          importArmed = true;
+          btn.textContent = '再按一次确认覆盖';
+          return;
+        }
+        try {
+          store.importSave(raw);
+          location.reload();
+        } catch (err) {
+          importArmed = false;
+          btn.textContent = `导入失败：${err.message}`;
+        }
       } else if (act === 'wipe') {
         if (!wipeArmed) {
           wipeArmed = true;
