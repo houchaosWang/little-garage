@@ -98,8 +98,10 @@ function receiveProgress(req, res) {
       const rec = parseUpload(Buffer.concat(chunks).toString('utf8'));
       if (rec.error) { finish(400, rec.error); return; }
       try {
-        writeProgress(DATA_DIR, rec);
-        console.log(`  ● ${clock()} 收到孩子的进度（${rec.app || '版本未知'}）：${summarize(rec.save)}`);
+        const w = writeProgress(DATA_DIR, rec);
+        const who = rec.device ? `iPad·${rec.device.slice(-5)}` : 'iPad（旧版本，无编号）';
+        const note = w.main ? '' : '  → 进度比主进度少，单独存到 devices/，没覆盖主进度';
+        console.log(`  ● ${clock()} 收到${who}的进度（${rec.app || '版本未知'}）：${summarize(rec.save)}${note}`);
         finish(200, 'ok');
       } catch (e) {
         console.error(`  ✖ ${clock()} 进度写入失败：${e.message}`);

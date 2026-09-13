@@ -14,7 +14,16 @@ function wake() {
   if (window.innerHeight > window.innerWidth) return;
   if (!unlocked) return;
   const c = ensureCtx();
-  if (c && c.state !== 'running') { try { c.resume(); } catch { /* iOS需要手势时会静默失败，下次触摸再试 */ } }
+  if (c && c.state !== 'running') {
+    try { c.resume(); } catch { /* iOS需要手势时会静默失败，下次触摸再试 */ }
+    // 老 iOS 要在手势里真的放一下声音才算解锁：放一个 1 帧的静音
+    try {
+      const s = c.createBufferSource();
+      s.buffer = c.createBuffer(1, 1, 22050);
+      s.connect(c.destination);
+      s.start(0);
+    } catch { /* 解锁失败下次触摸再试 */ }
+  }
   if (keepalive && keepalive.paused) keepalive.play().catch(() => {});
 }
 
@@ -39,9 +48,20 @@ export function unlock() {
 }
 
 document.addEventListener('pointerdown', wake, true);
+// 老 iOS 只认 touchend 里的解锁（pointerdown 发生在 touchstart 阶段，不算"用户手势"）
+document.addEventListener('touchend', wake, true);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) wake(); });
 window.addEventListener('pageshow', wake);
 window.addEventListener('focus', wake);
+
+// 老 iPad（iOS 14.4 及以前，Safari < 14.1）的 decodeAudioData 只认回调写法、不返回 Promise，
+// 只传一个参数会直接抛错——那样所有语音都"没准备好"，游戏一句话都不说。回调写法新旧都支持。
+function decode(c, raw) {
+  return new Promise((resolve, reject) => {
+    const p = c.decodeAudioData(raw, resolve, reject);
+    if (p && typeof p.then === 'function') p.then(resolve, reject);
+  });
+}
 
 function loadBuffer(name) {
   if (!buffers.has(name)) {
@@ -51,7 +71,7 @@ function loadBuffer(name) {
       const res = await fetch(`audio/${name}.mp3`);
       if (!res.ok) throw new Error(name);
       const raw = await res.arrayBuffer();
-      return await c.decodeAudioData(raw);
+      return await decode(c, raw);
     })();
     buffers.set(name, p);
     p.catch(() => { buffers.delete(name); });
@@ -78,7 +98,7 @@ function stopCurrent() {
   if (current) {
     const c = current;
     current = null;
-    try { c.src.onended = null; c.src.stop(); } catch {}
+    try { c.src.onended = null; c.src.stop(0); } catch {}
     c.res();
   }
 }
@@ -96,7 +116,7 @@ function playBuffer(buf, myGen) {
         res();
       };
       src.onended = done;
-      src.start();
+      src.start(0);
       setTimeout(done, buf.duration * 1000 + 500);
     } catch { res(); }
   });
@@ -147,7 +167,9 @@ function tone(freq, dur, type = 'sine', gainPeak = 0.25, when = 0) {
   g.gain.setValueAtTime(0.0001, t);
   g.gain.exponentialRampToValueAtTime(gainPeak, t + 0.02);
   g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-  o.connect(g).connect(ctx.destination);
+  // 分两句连：老 WebKit 的 connect() 不返回目标节点，链式写法会抛错
+  o.connect(g);
+  g.connect(ctx.destination);
   o.start(t);
   o.stop(t + dur + 0.05);
 }

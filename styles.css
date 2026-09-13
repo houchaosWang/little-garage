@@ -1,16 +1,24 @@
-* { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; -webkit-user-select: none; user-select: none; }
+/* 兼容老 iPad（iOS 14.4 及以前的 Safari）——tests/compat.test.mjs 会查：
+   1. 不用 inset（14.5 才支持）：写 top/right/bottom/left，否则全屏层会缩成一小块堆在左上角；
+   2. 不用 flex 的 gap（14.1 才支持）：用 margin；grid 的 gap 老 Safari 早就支持，可以留；
+   3. 竖排 flex 容器限制了高度（max-height + 滚动）时，子元素一律 flex-shrink:0——
+      老 Safari 会把子元素压扁叠在一起，而不是出滚动条。 */
+* { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 html, body { height: 100%; overflow: hidden; background: #FFF3DD; font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; }
-#stage { position: fixed; inset: 0; width: 100%; height: 100%; }
+#stage { position: fixed; top: 0; left: 0; width: 100%; height: 100%; }
+#stage[hidden] { display: none; }
 
-.boot { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; background: #FFF3DD; z-index: 10; }
+.boot { position: fixed; top: 0; right: 0; bottom: 0; left: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 24px; background: #FFF3DD; z-index: 10; }
+.boot > * + * { margin-top: 24px; }
 .boot[hidden] { display: none; }
 #bell { border: none; background: none; cursor: pointer; animation: bell-bounce 1.6s ease-in-out infinite; }
 #bell:active { transform: scale(0.92); }
 #bell:disabled { opacity: 0.35; animation: none; pointer-events: none; }
-.boot-hint { font-size: 28px; color: #8A5A1F; }
+.boot-hint { font-size: 28px; color: #8A5A1F; text-align: center; }
 @keyframes bell-bounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
 
-#rotate-tip { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; background: #FFF3DD; z-index: 99; }
+#rotate-tip { position: fixed; top: 0; right: 0; bottom: 0; left: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #FFF3DD; z-index: 99; }
+#rotate-tip > * + * { margin-top: 16px; }
 #rotate-tip[hidden] { display: none; }
 #rotate-tip p { font-size: 26px; color: #8A5A1F; }
 
@@ -20,37 +28,51 @@ html, body { height: 100%; overflow: hidden; background: #FFF3DD; font-family: -
 @keyframes pulse-ring { 0%,100% { opacity: 0.5; } 50% { opacity: 1; } }
 .tire-inner { transform-box: fill-box; transform-origin: center; }
 
-#parent-panel { position: fixed; inset: 0; background: rgba(43,58,92,0.55); display: flex; align-items: center; justify-content: center; z-index: 200; }
-.pp-card { background: #FFF3DD; border-radius: 24px; padding: 28px 32px; width: min(440px, 86vw); display: flex; flex-direction: column; gap: 14px; }
+#parent-panel { position: fixed; top: 0; right: 0; bottom: 0; left: 0; background: rgba(43,58,92,0.55); display: flex; align-items: center; justify-content: center; z-index: 200; }
+.pp-card { background: #FFF3DD; border-radius: 24px; padding: 28px 32px; width: min(440px, 86vw); max-height: 88vh; overflow-y: auto; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; }
+.pp-card > * { flex-shrink: 0; }
+.pp-card > * + * { margin-top: 14px; }
 .pp-title { font-size: 24px; color: #8A5A1F; text-align: center; }
 .pp-row { display: flex; align-items: center; justify-content: space-between; font-size: 20px; color: #6B4A12; }
-.pp-step { display: flex; align-items: center; gap: 14px; }
+.pp-step { display: flex; align-items: center; }
+.pp-step > * + * { margin-left: 14px; }
 .pp-btn { width: 52px; height: 52px; border-radius: 50%; border: none; background: #F5B324; color: #6B4A12; font-size: 28px; }
 .pp-num { font-size: 26px; min-width: 40px; text-align: center; color: #6B4A12; }
-.pp-hint { font-size: 15px; color: #A0763A; text-align: right; margin-top: -8px; }
+.pp-hint { font-size: 15px; color: #A0763A; text-align: right; }
+.pp-card > .pp-hint { margin-top: 6px; }
 .pp-wide { width: 100%; padding: 14px 0; border: none; border-radius: 14px; background: #FFE1A6; color: #6B4A12; font-size: 19px; }
 .pp-danger { background: #F3C1B8; color: #8A2F1D; }
 
-#trace-box { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 50; background: rgba(255,243,221,0.6); }
+#trace-box { position: fixed; top: 0; right: 0; bottom: 0; left: 0; display: flex; align-items: center; justify-content: center; z-index: 50; background: rgba(255,243,221,0.6); }
 .trace-card { background: #FFFFFF; border: 6px solid #E8C97F; border-radius: 24px; padding: 18px; }
 
 #parent-panel, #parent-panel * { touch-action: auto; }
-.pp-card { max-height: 88vh; overflow-y: auto; }
-.pp-sec { font-size: 17px; color: #8A5A1F; border-top: 2px solid #EDD9AC; padding-top: 12px; margin-top: 2px; }
-.pp-map-row { display: flex; align-items: flex-start; gap: 10px; font-size: 15px; color: #6B4A12; }
+.pp-sec { font-size: 17px; color: #8A5A1F; border-top: 2px solid #EDD9AC; padding-top: 12px; }
+.pp-card > .pp-sec { margin-top: 16px; }
+.pp-map-row { display: flex; align-items: flex-start; font-size: 15px; color: #6B4A12; }
+.pp-map-row > * + * { margin-left: 10px; }
 .pp-map-name { min-width: 118px; padding-top: 3px; }
-.pp-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.pp-chip { border-radius: 8px; padding: 3px 8px; font-size: 13px; white-space: nowrap; }
+.pp-chips { display: flex; flex-wrap: wrap; margin: 0 -6px -6px 0; }
+.pp-chip { border-radius: 8px; padding: 3px 8px; font-size: 13px; white-space: nowrap; margin: 0 6px 6px 0; }
 .pp-stat { font-size: 14px; color: #6B4A12; }
-#pp-io { display: flex; flex-direction: column; gap: 12px; }
+#pp-io { display: flex; flex-direction: column; }
+#pp-io[hidden] { display: none; }
+#pp-io > * { flex-shrink: 0; }
+#pp-io > * + * { margin-top: 12px; }
+#pp-io > .pp-sec { margin-top: 14px; }
+#pp-io > .pp-sec:first-child { margin-top: 2px; }
 .pp-ta { width: 100%; box-sizing: border-box; height: 88px; padding: 8px 10px; border-radius: 12px;
   border: 2px solid #EDD9AC; background: #fff; color: #6B4A12; font: 13px/1.4 monospace; resize: none; }
-.pp-sync { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px; margin-top: -6px; }
+.pp-sync { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; }
+.pp-card > .pp-sync { margin-top: 8px; }
+.pp-sync > * + * { margin-left: 8px; }
 .pp-link { border: none; background: #FFE1A6; color: #6B4A12; border-radius: 10px; padding: 4px 12px; font-size: 14px; }
 
-.page-overlay { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 60; background: rgba(255,243,221,0.92); touch-action: auto; }
+.page-overlay { position: fixed; top: 0; right: 0; bottom: 0; left: 0; display: flex; align-items: center; justify-content: center; z-index: 60; background: rgba(255,243,221,0.92); touch-action: auto; }
 .page-overlay * { touch-action: auto; }
-.page-card { background: #FFFFFF; border: 6px solid #E8C97F; border-radius: 24px; padding: 28px 36px; display: flex; flex-direction: column; gap: 16px; align-items: center; min-width: 320px; }
+.page-card { background: #FFFFFF; border: 6px solid #E8C97F; border-radius: 24px; padding: 28px 36px; display: flex; flex-direction: column; align-items: center; min-width: 320px; }
+.page-card > * { flex-shrink: 0; }
+.page-card > * + * { margin-top: 16px; }
 .page-title { font-size: 22px; color: #8A5A1F; }
 
 .page-wide { min-width: 86vw; max-height: 92vh; overflow: hidden; }
@@ -58,7 +80,7 @@ html, body { height: 100%; overflow: hidden; background: #FFF3DD; font-family: -
 .page-wide .pp-wide { width: min(760px, 84vw); }
 .drag-ghost { filter: drop-shadow(0 4px 6px rgba(0,0,0,0.25)); }
 
-.album-body { width: min(760px, 84vw); max-height: 64vh; overflow-y: auto; padding-right: 6px; }
+.album-body { width: min(760px, 84vw); max-height: 64vh; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-right: 6px; }
 .album-sec { margin-bottom: 20px; }
 .album-sec-title { font-size: 19px; color: #8A5A1F; border-top: 2px solid #EDD9AC; padding-top: 12px; margin: 0 0 12px; }
 .album-sec:first-child .album-sec-title { border-top: none; padding-top: 0; }

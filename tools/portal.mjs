@@ -22,8 +22,8 @@ export function portalHtml({ httpsUrl, addresses = [], httpsPort = 8443 }) {
   .sub { margin:0 0 22px; color:#9A876A; font-size:15px; }
   .card { background:#fff; border-radius:18px; padding:18px 20px; margin:0 0 16px;
     box-shadow:0 2px 10px rgba(138,90,31,.10); }
-  .step { display:flex; align-items:center; gap:10px; font-size:20px; font-weight:700; color:#8A5A1F; margin:0 0 10px; }
-  .n { flex:none; width:30px; height:30px; border-radius:50%; background:#E8763A; color:#fff;
+  .step { display:flex; align-items:center; font-size:20px; font-weight:700; color:#8A5A1F; margin:0 0 10px; }
+  .n { flex:none; width:30px; height:30px; margin-right:10px; border-radius:50%; background:#E8763A; color:#fff;
     font-size:17px; display:flex; align-items:center; justify-content:center; }
   p { margin:8px 0; }
   ol { margin:8px 0; padding-left:22px; }

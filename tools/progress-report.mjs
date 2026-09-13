@@ -148,6 +148,17 @@ export function renderReport(rec, history = []) {
   return L.join('\n');
 }
 
+const jobsOf = save => Object.values((save && save.stats && save.stats.daily) || {}).reduce((a, d) => a + ((d && d.jobs) || 0), 0);
+// 家里有两台 iPad 时，每台的最新一份在 devices/ 里；latest.json 是其中那台主力 iPad
+function otherDevices(dir, mainRec) {
+  const d = join(dir, 'devices');
+  if (!existsSync(d)) return [];
+  const mainId = mainRec.device || 'legacy';
+  return readdirSync(d).filter(f => f.endsWith('.json')).map(f => {
+    try { return { name: f.slice(0, -5), rec: JSON.parse(readFileSync(join(d, f), 'utf8')) }; } catch { return null; }
+  }).filter(x => x && x.name !== mainId);
+}
+
 function main() {
   const root = fileURLToPath(new URL('..', import.meta.url));
   const dir = process.env.GARAGE_DATA_DIR || join(root, 'data', 'progress');
@@ -160,6 +171,14 @@ function main() {
   }
   const rec = JSON.parse(readFileSync(file, 'utf8'));
   console.log(renderReport(rec, process.argv[2] ? [] : dailyHistory(dir)));
+  if (!process.argv[2]) {
+    const others = otherDevices(dir, rec);
+    if (others.length) console.log('\n— 其它 iPad 的进度（没有算进上面的报告）—');
+    for (const o of others) {
+      const at = o.rec.receivedAt ? new Date(o.rec.receivedAt).toLocaleString('zh-CN', { hour12: false }) : '?';
+      console.log(`${o.name}：累计 ${jobsOf(o.rec.save)} 单 · 最后同步 ${at}${o.rec.app ? ` · ${o.rec.app}` : ''}`);
+    }
+  }
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main();

@@ -4,6 +4,7 @@
 //   github.io 等任何公网地址一个字节都不发；localhost 调试也不发，免得测试数据混进真实进度。
 // 电脑关着是常态：发不出去就静默放弃，下次存档再发，孩子完全无感。
 const STATUS_KEY = 'garage-sync-v1';
+const DEVICE_KEY = 'garage-device-v1';
 
 export function isPrivateLanHost(hostname) {
   const m = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(String(hostname || ''));
@@ -19,13 +20,26 @@ export function shouldSync(loc) {
   return !!loc && loc.protocol === 'https:' && isPrivateLanHost(loc.hostname);
 }
 
+// 每台 iPad 一个随机编号，只用来让电脑分清"这是哪台 iPad 的进度"，不含任何个人信息。
+// 家里有两台 iPad 时，没有它就会互相覆盖——一台刚装好的空白 iPad 同步一次，就把孩子的主进度冲掉了。
+export function deviceId(storage, rand = Math.random, now = Date.now) {
+  try {
+    const old = storage.getItem(DEVICE_KEY);
+    if (old && /^[a-z0-9-]{4,40}$/.test(old)) return old;
+  } catch { /* 读不了就用一个临时编号 */ }
+  const id = `pad-${now().toString(36)}-${Math.floor(rand() * 1e9).toString(36)}`;
+  try { storage.setItem(DEVICE_KEY, id); } catch { /* 静默 */ }
+  return id;
+}
+
 export function createSync({
-  enabled, post, storage, app = '',
+  enabled, post, storage, app = '', device = '',
   now = () => Date.now(), delayMs = 3000,
   setTimer = (fn, ms) => setTimeout(fn, ms), clearTimer = id => clearTimeout(id),
 }) {
   let timer = null;
   let pending = null;
+  const dev = enabled ? (device || deviceId(storage)) : '';
 
   function status() {
     try { return JSON.parse(storage.getItem(STATUS_KEY) || 'null') || {}; } catch { return {}; }
@@ -38,7 +52,7 @@ export function createSync({
   async function flush() {
     if (timer !== null) { clearTimer(timer); timer = null; }
     if (!enabled || !pending) return false;
-    const body = JSON.stringify({ app: typeof app === 'function' ? app() : app, sentAt: now(), save: pending });
+    const body = JSON.stringify({ app: typeof app === 'function' ? app() : app, device: dev, sentAt: now(), save: pending });
     pending = null;
     let ok = false;
     try { ok = !!(await post(body)); } catch { ok = false; }

@@ -67,6 +67,7 @@
 
 - 服务器窗口每收到一次会打印一行 `●`，写明累计多少单、各技能几级。
 - 数据落在 `data/progress/latest.json`（最新）和 `data/progress/daily/日期.json`（每天最后一份，用来看每天的变化）。`data/` 已 gitignore——仓库是公开的，绝不会被提交。
+- **家里不止一台 iPad 时**：每台 iPad 是各自独立的一份进度（不会自动合并）。电脑上 `data/progress/devices/` 里每台各存一份；`latest.json`（主进度、报告读它）只跟着"同一台"或"进度不少于它的那台"走，一台空白的 iPad 打开游戏不会把孩子的主进度冲掉。想让孩子换到另一台 iPad 玩，用下面的"存档搬家"把进度搬过去。
 - 看人话报告：`node tools/progress-report.mjs` —— 各技能等级、每个游戏的总账、每天的等级变化、最近30道题（级别/错几次/求助/用时/什么题），以及“偏简单 / 吃力 / 封顶”的判断。
 - 家长面板里能看到“已同步到电脑 · 今天 14:05”，也可以点旁边的 `立即同步` 马上发一份。
 
@@ -78,11 +79,12 @@
 
 ## 更新内容（在电脑上）
 
-1. 改代码；每次内容更新必须把 `sw.js` 里的 `VERSION` 改成新值（如 `garage-v15`），否则 iPad 拿不到新资源；新增的 js 文件与语音也必须加进 `sw.js` 的 `ASSETS` / `AUDIO_NAMES`（`tests/levels.test.mjs`、`tests/integration.test.mjs`、`tests/syllable.test.mjs` 会查出漏加和拼错）。
+1. 改代码；每次内容更新必须把 `sw.js` 里的 `VERSION` 改成新值（如 `garage-v16`），否则 iPad 拿不到新资源；新增的 js 文件与语音也必须加进 `sw.js` 的 `ASSETS` / `AUDIO_NAMES`（`tests/levels.test.mjs`、`tests/integration.test.mjs`、`tests/syllable.test.mjs` 会查出漏加和拼错）。
+   要照顾老 iPad（iOS 13.4 起）：CSS 别用 `inset` 和 flex 的 `gap`，JS 别用 iOS 13.4 没有的新语法——`tests/compat.test.mjs` 会查。
 2. 启动服务器（局域网这份不用 push，改完就生效）；iPad 打开APP等十几秒、划掉再打开即拿到新版。
    如果用 GitHub Pages 那份：`git push` 后约1分钟生效。
 3. 发布后自检：电脑浏览器打开 `http://localhost:8080/?sw=1`，开发者工具 → Application → Cache Storage
-   应看到 `garage-v14`（当前版本号）缓存且 **438个条目** —— 这一步能发现“某个文件漏提交导致离线缓存整体失效”。
+   应看到 `garage-v15`（当前版本号）缓存且 **438个条目** —— 这一步能发现“某个文件漏提交导致离线缓存整体失效”。
    自检完打开 `http://localhost:8080/?sw=0` 注销，别把缓存留在 8080 端口上妨碍别的项目。
 
 ## 开发
